@@ -9,14 +9,14 @@ import lombok.EqualsAndHashCode;
 @Data
 @Entity
 @EqualsAndHashCode(callSuper = true)
-@Table(name = "currency", schema = SCHEMA_NAME)
+@Table(name = "currencies", schema = SCHEMA_NAME)
 public class Currency extends BasicEntities {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "currency_generator")
     @SequenceGenerator(
             name = "currency_generator",
-            sequenceName = SCHEMA_NAME + ".seq_currency_id",
+            sequenceName = SCHEMA_NAME + ".seq_currencies_id",
             allocationSize = 1
     )
     @Column(name = "currency_id")

@@ -11,7 +11,7 @@ import com.webstore.service.whatsapp.strategy.ProductDisplayStrategy;
 import com.webstore.service.whatsapp.strategy.impl.ProductListDisplayStrategy;
 import com.webstore.util.MessageFormatter;
 import com.webstore.util.PaginationUtil;
-import com.webstore.dto.request.WhatsAppRequestDto;
+import com.webstore.dto.request.whatsapp.WhatsAppRequestDto;
 import com.webstore.service.whatsapp.builder.MessageBuilderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +84,8 @@ public class ProductFlowService {
         String productDetails = formatter.formatProductDetails(
                 product.getProductName(),
                 product.getProductDescription(),
-                product.getCategory() != null ? product.getCategory().getCategoryName() : "Unknown",
+                product.getCatalogueCategory() != null && product.getCatalogueCategory().getCategoryName() != null 
+                    ? product.getCatalogueCategory().getCategoryName() : "Unknown",
                 priceInfo
         );
 

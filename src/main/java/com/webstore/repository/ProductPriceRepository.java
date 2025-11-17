@@ -17,7 +17,7 @@ public interface ProductPriceRepository extends JpaRepository<ProductPrice, Inte
 
         Optional<ProductPrice> findByProductProductIdAndCurrencyCurrencyId(Integer productId, Integer currencyId);
 
-        @Query("SELECT pp FROM ProductPrice pp JOIN FETCH pp.product p JOIN FETCH pp.currency c WHERE p.category.categoryId = :categoryId")
+        @Query("SELECT pp FROM ProductPrice pp JOIN FETCH pp.product p JOIN FETCH pp.currency c WHERE p.catalogueCategory.category.categoryId = :categoryId")
         List<ProductPrice> findByProductCategoryCategoryId(@Param("categoryId") Integer categoryId);
 
         @Query("SELECT pp FROM ProductPrice pp JOIN FETCH pp.product p JOIN FETCH pp.currency c WHERE p.productId IN :productIds")

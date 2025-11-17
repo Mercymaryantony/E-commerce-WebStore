@@ -12,14 +12,14 @@ import lombok.EqualsAndHashCode;
 @Data
 @Entity
 @EqualsAndHashCode(callSuper = true)
-@Table(name = "catalogue", schema = SCHEMA_NAME)
+@Table(name = "catalogues", schema = SCHEMA_NAME)
 public class Catalogue extends BasicEntities {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "catalogue_generator")
     @SequenceGenerator(
             name = "catalogue_generator",
-            sequenceName = SCHEMA_NAME + ".seq_catalogue_id",
+            sequenceName = SCHEMA_NAME + ".seq_catalogues_id",
             allocationSize = 1
     )
     @Column(name = "catalogue_id")

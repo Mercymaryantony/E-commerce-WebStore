@@ -16,6 +16,9 @@ public class ProductRequestDto {
     @Size(max = 500, groups = ProductValidation.class, message = "Product description must not exceed 500 characters")
     private String productDescription;
 
+    @NotNull(groups = ProductValidation.class, message = "Catalogue ID is required")
+    private Integer catalogueId;
+
     @NotNull(groups = ProductValidation.class, message = "Category ID is required")
     private Integer categoryId;
 }

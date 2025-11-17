@@ -44,6 +44,13 @@ public class CatalogueController {
         return ResponseEntity.ok(catalogueService.getCatalogueById(id));
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<List<CatalogueResponseDto>> searchCatalogues(@RequestParam String name){
+        System.out.println("Searching catalogues with keywords: "+name);
+        List<CatalogueResponseDto> catalogues=catalogueService.searchByName(name);
+        return ResponseEntity.ok(catalogues);
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<CatalogueResponseDto> updateCatalogue(
             @PathVariable Integer id,

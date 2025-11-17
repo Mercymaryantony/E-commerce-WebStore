@@ -12,7 +12,7 @@ import java.math.BigInteger;
 @Entity
 @EqualsAndHashCode(callSuper = true)
 @Table(
-        name = "product_price",
+        name = "product_prices",
         schema = SCHEMA_NAME,
         uniqueConstraints = @UniqueConstraint(
                 name = "uk_product_currency",
@@ -25,7 +25,7 @@ public class ProductPrice extends BasicEntities {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "product_price_generator")
     @SequenceGenerator(
             name = "product_price_generator",
-            sequenceName = SCHEMA_NAME + ".seq_product_price_id",
+            sequenceName = SCHEMA_NAME + ".seq_product_prices_id",
             allocationSize = 1
     )
     @Column(name = "product_price_id")

@@ -1,4 +1,4 @@
-package com.webstore.service.whatsapp.strategy.impl;
+package com.webstore.service.whatsapp.list.impl;
 
 import com.webstore.service.whatsapp.business.CategoryBusinessService;
 import com.webstore.service.whatsapp.core.WhatsAppMessageSender;
