@@ -26,8 +26,7 @@ public class SellerRequestDto {
     @Size(max = 100, groups = SellerValidation.class, message = "Email must not exceed 100 characters")
     private String email;
 
-    /**
-     * Seller status (ACTIVE or INACTIVE)
+    /*Seller status (ACTIVE or INACTIVE)
      * Optional - defaults to ACTIVE in entity if not provided
      */
     private SellerStatus status;

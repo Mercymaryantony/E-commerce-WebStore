@@ -77,7 +77,7 @@ public class SellerServiceImplementation implements SellerService {
     public List<SellerResponseDto> getAllSellers() {
         log.info("Fetching all sellers");
 
-        // findAll() - Repository method that gets all records
+        
         // stream() - Convert list to stream for processing
         // map() - Transform each Seller to SellerResponseDto
         // collect() - Collect results back into a list

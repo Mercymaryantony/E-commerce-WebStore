@@ -7,18 +7,7 @@ import lombok.EqualsAndHashCode;
 import java.time.LocalDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-/**
- * Seller Entity - Represents a seller/vendor in the system
- * 
- * This entity is used to manage seller information in the admin dashboard.
- * Sellers are standalone and not linked to products (Option 1: Independent Management).
- * 
- * Key Features:
- * - Auto-generated primary key (seller_id)
- * - Unique email constraint
- * - Status tracking (ACTIVE/INACTIVE)
- * - Audit fields inherited from BasicEntities (createdAt, updatedAt, etc.)
- */
+
 @Data
 @Entity
 @EqualsAndHashCode(callSuper = true)
@@ -26,8 +15,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Table(name = "sellers", schema = SCHEMA_NAME)
 public class Seller extends BasicEntities {
 
-    /**
-     * Primary Key - Auto-generated seller ID
+    /*Primary Key - Auto-generated seller ID
      * Uses PostgreSQL sequence for ID generation
      */
     @Id
@@ -40,41 +28,25 @@ public class Seller extends BasicEntities {
     @Column(name = "seller_id")
     private Integer sellerId;
 
-    /**
-     * Seller's full name
-     * Required field, max 100 characters
-     */
     @Column(name = "name", length = 100, nullable = false)
     private String name;
 
-    /**
-     * Seller's email address
-     * Required, unique constraint - no two sellers can have the same email
-     */
+    
     @Column(name = "email", length = 100, nullable = false, unique = true)
     private String email;
 
-    /**
-     * Seller's current status
-     * Stored as STRING in database ("ACTIVE" or "INACTIVE")
-     * Defaults to ACTIVE when a new seller is created
+    /*Defaults to ACTIVE when a new seller is created
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
     private SellerStatus status = SellerStatus.ACTIVE;
 
-    /**
-     * Date when the seller joined the platform
-     * Required field, uses LocalDate (date only, no time)
-     */
+    // uses LocalDate (date only, no time)
+     
     @Column(name = "joining_date", nullable = false)
     private LocalDate joiningDate;
 
-    /**
-     * Enum for Seller Status
-     * ACTIVE: Seller can operate normally
-     * INACTIVE: Seller account is disabled
-     */
+    
     public enum SellerStatus {
         ACTIVE,
         INACTIVE
