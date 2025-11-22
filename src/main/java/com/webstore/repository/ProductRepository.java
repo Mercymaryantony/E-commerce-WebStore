@@ -2,6 +2,7 @@ package com.webstore.repository;
 
 import com.webstore.entity.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -47,4 +48,9 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     // Find product ID by product name
     @Query("SELECT p.productId FROM Product p WHERE p.productName = :productName")
     Integer findProductIdByProductName(@Param("productName") String productName);
+    
+    // Delete all products for a category
+    @Modifying
+    @Query("DELETE FROM Product p WHERE p.catalogueCategory.category.categoryId = :categoryId")
+    void deleteByCategoryId(@Param("categoryId") Integer categoryId);
 }

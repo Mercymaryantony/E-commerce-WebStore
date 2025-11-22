@@ -24,4 +24,18 @@ public interface CategoryRepository extends JpaRepository<Category, Integer> {
 
     @Query("SELECT c.categoryName FROM Category c")
     List<String> findAllCategoryNames();
+
+    @Query("SELECT DISTINCT c FROM Category c " +
+           "LEFT JOIN FETCH c.catalogueCategories cc " +
+           "LEFT JOIN FETCH cc.catalogue " +
+           "WHERE c.categoryId = :id")
+    Optional<Category> findByIdWithRelations(@Param("id") Integer id);
+
+    // Use JOIN FETCH to eagerly load catalogueCategories and catalogues
+    // DISTINCT - to avoid duplicate Category entities
+    @Query("SELECT DISTINCT c FROM Category c " +
+           "LEFT JOIN FETCH c.catalogueCategories cc " +
+           "LEFT JOIN FETCH cc.catalogue " +
+           "ORDER BY c.categoryId")
+    List<Category> findAllWithRelations();
 }

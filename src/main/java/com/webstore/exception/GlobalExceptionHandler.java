@@ -46,7 +46,20 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleGeneralException(Exception ex) {
         LOGGER.error("Webstore: Unexpected exception occurred: {}", ex.getMessage(), ex);
+        LOGGER.error("Exception type: {}", ex.getClass().getName());
+        LOGGER.error("Full stack trace:", ex);
+        
+        // Return detailed error message for debugging
+        String errorDetails = String.format(
+            "Webstore Error:\n" +
+            "Type: %s\n" +
+            "Message: %s\n" +
+            "Check application logs for full stack trace.",
+            ex.getClass().getSimpleName(),
+            ex.getMessage() != null ? ex.getMessage() : "No error message available"
+        );
+        
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Webstore: Something went wrong. Please try again later.");
+                .body(errorDetails);
     }
 }
