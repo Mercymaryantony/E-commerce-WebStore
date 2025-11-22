@@ -43,7 +43,8 @@ public class CategoryController {
         CategoryResponseDto created = categoryService.createCategory(dto);
         return ResponseEntity.status(201).body(created);
     }
-
+    
+    //updating based on id
     @PutMapping("/{id}")
     public ResponseEntity<CategoryResponseDto> updateCategory(@PathVariable Integer id,
                                                               @RequestBody @Valid CategoryRequestDto dto) {
