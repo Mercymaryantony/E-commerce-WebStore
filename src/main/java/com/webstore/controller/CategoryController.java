@@ -38,6 +38,7 @@ public class CategoryController {
         return ResponseEntity.ok(categoryService.getCategoryById(id));
     }
 
+    //search option for categories
     @GetMapping("/search")
     public ResponseEntity<List<CategoryResponseDto>> searchCategories(@RequestParam(required = false) String searchTerm) {
         List<CategoryResponseDto> categories = categoryService.searchCategories(searchTerm);
