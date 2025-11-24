@@ -38,4 +38,7 @@ public interface CategoryRepository extends JpaRepository<Category, Integer> {
            "LEFT JOIN FETCH cc.catalogue " +
            "ORDER BY c.categoryId")
     List<Category> findAllWithRelations();
+
+        // Search categories by name (case-insensitive, partial match)
+        List<Category> findByCategoryNameContainingIgnoreCase(String name);
 }

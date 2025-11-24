@@ -11,6 +11,7 @@ public interface CategoryService {
     CategoryResponseDto getCategoryById(Integer id);
 
     CategoryResponseDto updateCategory(Integer id, CategoryRequestDto dto);
+    List<CategoryResponseDto> searchByName(String name);
 
     void deleteCategory(Integer id);
 }

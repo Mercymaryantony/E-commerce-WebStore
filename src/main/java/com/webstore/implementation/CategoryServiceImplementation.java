@@ -121,6 +121,16 @@ public class CategoryServiceImplementation implements CategoryService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<CategoryResponseDto> searchByName(String name) {
+        logger.info("Searching categories with name: {}", name);
+        return categoryRepository.findByCategoryNameContainingIgnoreCase(name)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional
     public void deleteCategory(Integer id) {
         // Verify category exists

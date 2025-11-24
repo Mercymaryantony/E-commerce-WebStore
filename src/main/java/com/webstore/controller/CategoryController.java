@@ -38,6 +38,16 @@ public class CategoryController {
         return ResponseEntity.ok(categoryService.getCategoryById(id));
     }
 
+
+    @GetMapping("/search")
+    public ResponseEntity<List<CategoryResponseDto>> searchCategories(@RequestParam String name) {
+        List<CategoryResponseDto> categories = categoryService.searchByName(name);
+        if (categories.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(categories);
+    }
+
     @PostMapping
     public ResponseEntity<CategoryResponseDto> createCategory(@RequestBody @Valid CategoryRequestDto dto) {
         CategoryResponseDto created = categoryService.createCategory(dto);
