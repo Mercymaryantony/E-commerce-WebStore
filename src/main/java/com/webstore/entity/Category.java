@@ -12,14 +12,14 @@ import lombok.EqualsAndHashCode;
 @Data
 @Entity
 @EqualsAndHashCode(callSuper = true)
-@Table(name = "category", schema = SCHEMA_NAME)
+@Table(name = "categories", schema = SCHEMA_NAME)
 public class Category extends BasicEntities {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "category_generator")
     @SequenceGenerator(
             name = "category_generator",
-            sequenceName = SCHEMA_NAME + ".seq_category_id",
+            sequenceName = SCHEMA_NAME + ".seq_categories_id",
             allocationSize = 1
     )
     @Column(name = "category_id")
@@ -31,8 +31,8 @@ public class Category extends BasicEntities {
     @Column(name = "category_description", length = 100)
     private String categoryDescription;
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private Set<Product> products = new HashSet<>();
+    // Products are now linked through CatalogueCategory, not directly
+    // @OneToMany(mappedBy = "category") removed
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<CatalogueCategory> catalogueCategories = new HashSet<>();

@@ -38,10 +38,17 @@ public class CategoryController {
         return ResponseEntity.ok(categoryService.getCategoryById(id));
     }
 
+<<<<<<< HEAD
     //search option for categories
     @GetMapping("/search")
     public ResponseEntity<List<CategoryResponseDto>> searchCategories(@RequestParam(required = false) String searchTerm) {
         List<CategoryResponseDto> categories = categoryService.searchCategories(searchTerm);
+=======
+
+    @GetMapping("/search")
+    public ResponseEntity<List<CategoryResponseDto>> searchCategories(@RequestParam String name) {
+        List<CategoryResponseDto> categories = categoryService.searchByName(name);
+>>>>>>> feature-seller
         if (categories.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -53,7 +60,8 @@ public class CategoryController {
         CategoryResponseDto created = categoryService.createCategory(dto);
         return ResponseEntity.status(201).body(created);
     }
-
+    
+    //updating based on id
     @PutMapping("/{id}")
     public ResponseEntity<CategoryResponseDto> updateCategory(@PathVariable Integer id,
                                                               @RequestBody @Valid CategoryRequestDto dto) {

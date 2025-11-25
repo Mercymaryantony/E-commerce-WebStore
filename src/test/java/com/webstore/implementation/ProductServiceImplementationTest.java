@@ -2,9 +2,11 @@ package com.webstore.implementation;
 
 import com.webstore.dto.request.ProductRequestDto;
 import com.webstore.dto.response.ProductResponseDto;
+import com.webstore.entity.Catalogue;
 import com.webstore.entity.Category;
+import com.webstore.entity.CatalogueCategory;
 import com.webstore.entity.Product;
-import com.webstore.repository.CategoryRepository;
+import com.webstore.repository.CatalogueCategoryRepository;
 import com.webstore.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +28,7 @@ class ProductServiceImplementationTest {
     private ProductRepository productRepository;
 
     @Mock
-    private CategoryRepository categoryRepository;
+    private CatalogueCategoryRepository catalogueCategoryRepository;
 
     @InjectMocks
     private ProductServiceImplementation productService;
@@ -34,6 +36,8 @@ class ProductServiceImplementationTest {
     private ProductRequestDto requestDto;
     private Product mockProduct;
     private Category mockCategory;
+    private Catalogue mockCatalogue;
+    private CatalogueCategory mockCatalogueCategory;
 
     @BeforeEach
     void setUp() {
@@ -42,22 +46,33 @@ class ProductServiceImplementationTest {
         requestDto = new ProductRequestDto();
         requestDto.setProductName("Test Product");
         requestDto.setProductDescription("Test Description");
+        requestDto.setCatalogueId(1);
         requestDto.setCategoryId(1);
 
         mockCategory = new Category();
         mockCategory.setCategoryId(1);
         mockCategory.setCategoryName("Electronics");
 
+        mockCatalogue = new Catalogue();
+        mockCatalogue.setCatalogueId(1);
+        mockCatalogue.setCatalogueName("Summer Collection");
+
+        mockCatalogueCategory = new CatalogueCategory();
+        mockCatalogueCategory.setCatalogueCategoryId(1);
+        mockCatalogueCategory.setCatalogue(mockCatalogue);
+        mockCatalogueCategory.setCategory(mockCategory);
+
         mockProduct = new Product();
         mockProduct.setProductId(1);
         mockProduct.setProductName("Test Product");
         mockProduct.setProductDescription("Test Description");
-        mockProduct.setCategory(mockCategory);
+        mockProduct.setCatalogueCategory(mockCatalogueCategory);
     }
 
     @Test
     void testCreateProduct() {
-        when(categoryRepository.findById(1)).thenReturn(Optional.of(mockCategory));
+        when(catalogueCategoryRepository.findByCatalogueCatalogueIdAndCategoryCategoryId(1, 1))
+                .thenReturn(Optional.of(mockCatalogueCategory));
         when(productRepository.save(any())).thenReturn(mockProduct);
 
         ProductResponseDto response = productService.createProduct(requestDto);
@@ -87,7 +102,8 @@ class ProductServiceImplementationTest {
     @Test
     void testUpdateProduct() {
         when(productRepository.findById(1)).thenReturn(Optional.of(mockProduct));
-        when(categoryRepository.findById(1)).thenReturn(Optional.of(mockCategory));
+        when(catalogueCategoryRepository.findByCatalogueCatalogueIdAndCategoryCategoryId(1, 1))
+                .thenReturn(Optional.of(mockCatalogueCategory));
         when(productRepository.save(any())).thenReturn(mockProduct);
 
         ProductResponseDto response = productService.updateProduct(1, requestDto);

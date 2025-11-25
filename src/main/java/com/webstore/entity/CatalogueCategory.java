@@ -2,6 +2,9 @@ package com.webstore.entity;
 
 import static com.webstore.constant.DatabaseConstants.SCHEMA_NAME;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -10,7 +13,7 @@ import lombok.EqualsAndHashCode;
 @Entity
 @EqualsAndHashCode(callSuper = true)
 @Table(
-        name = "catalogue_category",
+        name = "catalogue_categories",
         schema = SCHEMA_NAME,
         uniqueConstraints = @UniqueConstraint(
                 name = "uq_catalogue_category",
@@ -23,7 +26,7 @@ public class CatalogueCategory extends BasicEntities {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "catalogue_category_generator")
     @SequenceGenerator(
             name = "catalogue_category_generator",
-            sequenceName = SCHEMA_NAME + ".seq_catalogue_category_id",
+            sequenceName = SCHEMA_NAME + ".seq_catalogue_categories_id",
             allocationSize = 1
     )
     @Column(name = "catalogue_category_id")
@@ -36,4 +39,7 @@ public class CatalogueCategory extends BasicEntities {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
+
+    @OneToMany(mappedBy = "catalogueCategory", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<Product> products = new HashSet<>();
 }

@@ -45,9 +45,10 @@ class CatalogueCategoryServiceImplementationTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
 
-        requestDto = new CatalogueCategoryRequestDto();
-        requestDto.setCatalogueId(1);
-        requestDto.setCategoryId(2);
+        requestDto = CatalogueCategoryRequestDto.builder()
+                .catalogueId(1)
+                .categoryId(2)
+                .build();
 
         catalogue = new Catalogue();
         catalogue.setCatalogueId(1);

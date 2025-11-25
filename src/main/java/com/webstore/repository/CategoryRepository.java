@@ -25,6 +25,7 @@ public interface CategoryRepository extends JpaRepository<Category, Integer> {
     @Query("SELECT c.categoryName FROM Category c")
     List<String> findAllCategoryNames();
 
+<<<<<<< HEAD
     //search by category name (case-insensitive, partial match)
     @Query("SELECT c FROM Category c WHERE LOWER(c.categoryName) LIKE LOWER (CONCAT('%', :name, '%'))")
     List<Category> searchByCategoryName(@Param("name") String name);
@@ -41,4 +42,22 @@ public interface CategoryRepository extends JpaRepository<Category, Integer> {
     //Count produtcs in a category
     @Query("SELECT COUNT(p) FROM Product p WHERE p.catalogueCategory.category.categoryId = :catgeoryId")
     Long countProductsByCategoryId(@Param("categoryId") Integer categoryId);
+=======
+    @Query("SELECT DISTINCT c FROM Category c " +
+           "LEFT JOIN FETCH c.catalogueCategories cc " +
+           "LEFT JOIN FETCH cc.catalogue " +
+           "WHERE c.categoryId = :id")
+    Optional<Category> findByIdWithRelations(@Param("id") Integer id);
+
+    // Use JOIN FETCH to eagerly load catalogueCategories and catalogues
+    // DISTINCT - to avoid duplicate Category entities
+    @Query("SELECT DISTINCT c FROM Category c " +
+           "LEFT JOIN FETCH c.catalogueCategories cc " +
+           "LEFT JOIN FETCH cc.catalogue " +
+           "ORDER BY c.categoryId")
+    List<Category> findAllWithRelations();
+
+        // Search categories by name (case-insensitive, partial match)
+        List<Category> findByCategoryNameContainingIgnoreCase(String name);
+>>>>>>> feature-seller
 }

@@ -12,14 +12,14 @@ import lombok.EqualsAndHashCode;
 @Data
 @Entity
 @EqualsAndHashCode(callSuper = true)
-@Table(name = "product", schema = SCHEMA_NAME)
+@Table(name = "products", schema = SCHEMA_NAME)
 public class Product extends BasicEntities {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "product_generator")
     @SequenceGenerator(
             name = "product_generator",
-            sequenceName = SCHEMA_NAME + ".seq_product_id",
+            sequenceName = SCHEMA_NAME + ".seq_products_id",
             allocationSize = 1
     )
     @Column(name = "product_id")
@@ -32,8 +32,8 @@ public class Product extends BasicEntities {
     private String productDescription;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
-    private Category category;
+    @JoinColumn(name = "catalogue_category_id", nullable = false)
+    private CatalogueCategory catalogueCategory;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductPrice> productPrices = new ArrayList<>();

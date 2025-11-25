@@ -1,11 +1,11 @@
 package com.webstore.implementation;
 
-import com.webstore.dto.request.CategoryRequestDto;
 import com.webstore.dto.request.ProductRequestDto;
+import com.webstore.dto.response.CatalogueCategoryResponseDto;
 import com.webstore.dto.response.ProductResponseDto;
-import com.webstore.entity.Category;
+import com.webstore.entity.CatalogueCategory;
 import com.webstore.entity.Product;
-import com.webstore.repository.CategoryRepository;
+import com.webstore.repository.CatalogueCategoryRepository;
 import com.webstore.repository.ProductRepository;
 import com.webstore.service.ProductService;
 import jakarta.persistence.EntityNotFoundException;
@@ -26,20 +26,27 @@ import java.util.stream.Collectors;
 public class ProductServiceImplementation implements ProductService {
 
     private final ProductRepository productRepository;
-    private final CategoryRepository categoryRepository;
+    private final CatalogueCategoryRepository catalogueCategoryRepository;
 
     @Override
     @Transactional
     public ProductResponseDto createProduct(ProductRequestDto dto) {
         log.info("Creating product with name: {}", dto.getProductName());
 
-        Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found with ID: " + dto.getCategoryId()));
+        // Find or validate CatalogueCategory based on catalogueId + categoryId
+        CatalogueCategory catalogueCategory = catalogueCategoryRepository
+                .findByCatalogueCatalogueIdAndCategoryCategoryId(dto.getCatalogueId(), dto.getCategoryId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        String.format("CatalogueCategory not found for Catalogue ID: %d and Category ID: %d. " +
+                                "Please create the catalogue-category mapping first.", 
+                                dto.getCatalogueId(), dto.getCategoryId())
+                ));
 
         Product product = new Product();
         product.setProductName(dto.getProductName());
         product.setProductDescription(dto.getProductDescription());
-        product.setCategory(category);
+        product.setCatalogueCategory(catalogueCategory);
         product.setCreatedAt(LocalDateTime.now());
         product.setUpdatedAt(LocalDateTime.now());
 
@@ -79,12 +86,18 @@ public class ProductServiceImplementation implements ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found with ID: " + id));
 
-        Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found with ID: " + dto.getCategoryId()));
+        // Find catalogueCategory based on new catalogueId + categoryId
+        CatalogueCategory catalogueCategory = catalogueCategoryRepository
+                .findByCatalogueCatalogueIdAndCategoryCategoryId(dto.getCatalogueId(), dto.getCategoryId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        String.format("CatalogueCategory not found for Catalogue ID: %d and Category ID: %d",
+                                dto.getCatalogueId(), dto.getCategoryId())
+                ));
 
         product.setProductName(dto.getProductName());
         product.setProductDescription(dto.getProductDescription());
-        product.setCategory(category);
+        product.setCatalogueCategory(catalogueCategory);
         product.setUpdatedAt(LocalDateTime.now());
 
         Product updated = productRepository.save(product);
@@ -115,13 +128,28 @@ public class ProductServiceImplementation implements ProductService {
         dto.setCreatedBy(product.getCreatedBy());
         dto.setUpdatedBy(product.getUpdatedBy());
 
-        if (product.getCategory() != null) {
-            Category category = product.getCategory();
-            CategoryRequestDto categoryDto = new CategoryRequestDto();
-            categoryDto.setCategoryId(category.getCategoryId());
-            categoryDto.setCategoryName(category.getCategoryName());
-            categoryDto.setCategoryDescription(category.getCategoryDescription());
-            dto.setCategory(categoryDto);
+        // Convert CatalogueCategory to DTO
+        if (product.getCatalogueCategory() != null) {
+            CatalogueCategory cc = product.getCatalogueCategory();
+            CatalogueCategoryResponseDto ccDto = new CatalogueCategoryResponseDto();
+            ccDto.setCatalogueCategoryId(cc.getCatalogueCategoryId());
+            
+            if (cc.getCatalogue() != null) {
+                ccDto.setCatalogueId(cc.getCatalogue().getCatalogueId());
+                ccDto.setCatalogueName(cc.getCatalogue().getCatalogueName());
+            }
+            
+            if (cc.getCategory() != null) {
+                ccDto.setCategoryId(cc.getCategory().getCategoryId());
+                ccDto.setCategoryName(cc.getCategory().getCategoryName());
+            }
+            
+            ccDto.setCreatedAt(cc.getCreatedAt());
+            ccDto.setCreatedBy(cc.getCreatedBy());
+            ccDto.setUpdatedAt(cc.getUpdatedAt());
+            ccDto.setUpdatedBy(cc.getUpdatedBy());
+            
+            dto.setCatalogueCategory(ccDto);
         }
 
         return dto;
