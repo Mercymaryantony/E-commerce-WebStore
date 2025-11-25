@@ -6,7 +6,10 @@ import com.webstore.dto.response.CatalogueInfoDto;
 import com.webstore.entity.Category;
 import com.webstore.entity.CatalogueCategory;
 import com.webstore.repository.CategoryRepository;
+<<<<<<< HEAD
 import com.webstore.repository.CatalogueCategoryRepository;
+=======
+>>>>>>> feature-Categories
 import com.webstore.repository.ProductRepository;
 import com.webstore.service.CategoryService;
 import com.webstore.util.AuthUtils;
@@ -21,7 +24,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+<<<<<<< HEAD
 import jakarta.persistence.EntityManager;
+=======
+>>>>>>> feature-Categories
 
 import java.util.HashSet;
 import java.util.List;
@@ -31,6 +37,7 @@ import java.util.stream.Collectors;
 @Service
 public class CategoryServiceImplementation implements CategoryService {
 
+<<<<<<< HEAD
     private static final Logger logger = LoggerFactory.getLogger(CategoryServiceImplementation.class);
 
     @Autowired
@@ -53,6 +60,16 @@ public class CategoryServiceImplementation implements CategoryService {
         this.catalogueCategoryRepository = catalogueCategoryRepository;
         this.productRepository = productRepository;
         this.entityManager = entityManager;
+=======
+    
+    private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
+
+    @Autowired
+    public CategoryServiceImplementation(CategoryRepository categoryRepository, ProductRepository productRepository) {
+        this.categoryRepository = categoryRepository;
+        this.productRepository = productRepository;
+>>>>>>> feature-Categories
     }
 
     @Override
@@ -121,6 +138,7 @@ public class CategoryServiceImplementation implements CategoryService {
     }
 
     @Override
+<<<<<<< HEAD
     @Transactional(readOnly = true)
     public List<CategoryResponseDto> searchByName(String name) {
         logger.info("Searching categories with name: {}", name);
@@ -131,6 +149,8 @@ public class CategoryServiceImplementation implements CategoryService {
     }
 
     @Override
+=======
+>>>>>>> feature-Categories
     @Transactional
     public void deleteCategory(Integer id) {
         // Verify category exists
@@ -158,6 +178,17 @@ public class CategoryServiceImplementation implements CategoryService {
         entityManager.flush(); // Ensure category is deleted
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<CategoryResponseDto> searchCategories(String searchTerm){
+        if (searchTerm == null || searchTerm.trim().isEmpty()){
+            return getAllCategories(0, 100);
+        }
+
+        List<Category> categories = categoryRepository.searchByNameOrDescription(searchTerm.trim());
+        return categories.stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
+
     private CategoryResponseDto mapToResponse(Category category) {
         try {
             logger.debug("mapToResponse: Starting for category id={}, name={}", 
@@ -173,6 +204,7 @@ public class CategoryServiceImplementation implements CategoryService {
             dto.setUpdatedBy(category.getUpdatedBy());
             logger.debug("✓ Basic fields set for category {}", category.getCategoryId());
 
+<<<<<<< HEAD
             // Fetch catalogue information directly using native query
             // This is the most reliable way to get catalogue data
             Integer categoryId = category.getCategoryId();
@@ -243,5 +275,25 @@ public class CategoryServiceImplementation implements CategoryService {
             }
             return dto;
         }
+=======
+        //get product count for this category
+        Long productCount = categoryRepository.countProductsByCategoryId(category.getCategoryId());
+        dto.setProductCount(productCount !=null ? productCount :0L);
+
+        //get catalogues this category belongs to 
+        List<CategoryResponseDto.CatalogueInfoDto> catalogues = category.getCatalogueCategories().stream()
+                .map(CatalogueCategory::getCatalogue)
+                .map(catalogue -> {
+                    CategoryResponseDto.CatalogueInfoDto catalogueInfo = new CategoryResponseDto.CatalogueInfoDto();
+                    catalogueInfo.setCatalogueId(catalogue.getCatalogueId());
+                    catalogueInfo.setCatalogueName(catalogue.getCatalogueName());
+                    catalogueInfo.setCatalogueDescription(catalogue.getCatalogueDescription());
+                    return catalogueInfo;
+                })
+                .collect(Collectors.toList());
+        dto.setCatalogues(catalogues);
+
+        return dto;
+>>>>>>> feature-Categories
     }
 }

@@ -16,4 +16,20 @@ public class CategoryResponseDto {
     private String createdBy;
     private LocalDateTime updatedAt;
     private String updatedBy;
+<<<<<<< HEAD
+=======
+    private List<ProductResponseDto> products;
+
+    //fields for admin dashbaord 
+    private Long productCount;
+    private List<CatalogueInfoDto> catalogues;
+
+    //Inner DTO for catalogue info
+    @Data
+    public static class CatalogueInfoDto{
+        private Integer catalogueId;
+        private String catalogueName;
+        private String catalogueDescription;
+    }
+>>>>>>> feature-Categories
 }

@@ -14,4 +14,6 @@ public interface CategoryService {
     List<CategoryResponseDto> searchByName(String name);
 
     void deleteCategory(Integer id);
+    //Search categories
+    List<CategoryResponseDto> searchCategories(String searchTerm);
 }
