@@ -24,4 +24,21 @@ public interface CategoryRepository extends JpaRepository<Category, Integer> {
 
     @Query("SELECT c.categoryName FROM Category c")
     List<String> findAllCategoryNames();
+
+    //search by category name (case-insensitive, partial match)
+    @Query("SELECT c FROM Category c WHERE LOWER(c.categoryName) LIKE LOWER (CONCAT('%', :name, '%'))")
+    List<Category> searchByCategoryName(@Param("name") String name);
+
+    //Search by Category Description (case-insensitive,partial match)
+    @Query("SELECT c FROM Category c WHERE LOWER(c.categoryDescription) LIKE LOWER(CONCAT('%', :description, '%'))")
+    List<Category> searchByCategoryDescription(@Param("description") String description);
+
+    //Search by both name and desription
+
+    @Query("SELECT c FROM Category c WHERE LOWER(c.categoryName) LIKE LOWER(CONCAT('%', :searchTerm, '%'))" + "OR LOWER(c.categoryDescription) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
+    List<Category> searchByNameOrDescription(@Param("searchTerm") String searchTerm);
+
+    //Count produtcs in a category
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.catalogueCategory.category.categoryId = :catgeoryId")
+    Long countProductsByCategoryId(@Param("categoryId") Integer categoryId);
 }

@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+        "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+        "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<suppressions>
+    <!-- Suppress checks for auto-generated files if any -->
+    <suppress files="[\\/]com[\\/]webstore[\\/]generated[\\/]" checks=".*" />
+    
+    <!-- Suppress checks for DTOs if needed (optional) -->
+    <!-- <suppress files="[\\/]com[\\/]webstore[\\/]dto[\\/]" checks="JavadocType" /> -->
+    
+    <!-- Suppress checks for entity classes if needed (optional) -->
+    <!-- <suppress files="[\\/]com[\\/]webstore[\\/]entity[\\/]" checks="JavadocType" /> -->
+</suppressions>
