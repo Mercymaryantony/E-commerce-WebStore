@@ -38,17 +38,15 @@ public class CategoryController {
         return ResponseEntity.ok(categoryService.getCategoryById(id));
     }
 
-<<<<<<< HEAD
-    //search option for categories
+    // Search option for categories 
     @GetMapping("/search")
     public ResponseEntity<List<CategoryResponseDto>> searchCategories(@RequestParam(required = false) String searchTerm) {
-        List<CategoryResponseDto> categories = categoryService.searchCategories(searchTerm);
-=======
-
-    @GetMapping("/search")
-    public ResponseEntity<List<CategoryResponseDto>> searchCategories(@RequestParam String name) {
-        List<CategoryResponseDto> categories = categoryService.searchByName(name);
->>>>>>> feature-seller
+        List<CategoryResponseDto> categories;
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            categories = categoryService.getAllCategories(0, 100);
+        } else {
+            categories = categoryService.searchCategories(searchTerm);
+        }
         if (categories.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -61,7 +59,7 @@ public class CategoryController {
         return ResponseEntity.status(201).body(created);
     }
     
-    //updating based on id
+    // Updating based on id
     @PutMapping("/{id}")
     public ResponseEntity<CategoryResponseDto> updateCategory(@PathVariable Integer id,
                                                               @RequestBody @Valid CategoryRequestDto dto) {

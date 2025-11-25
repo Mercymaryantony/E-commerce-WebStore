@@ -8,7 +8,6 @@ import com.webstore.entity.CatalogueCategory;
 import com.webstore.repository.CatalogueCategoryRepository;
 import com.webstore.repository.CatalogueRepository;
 import com.webstore.repository.CategoryRepository;
-import com.webstore.util.AuthUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -45,10 +44,9 @@ class CatalogueCategoryServiceImplementationTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
 
-        requestDto = CatalogueCategoryRequestDto.builder()
-                .catalogueId(1)
-                .categoryId(2)
-                .build();
+        requestDto = new CatalogueCategoryRequestDto();
+        requestDto.setCatalogueId(1);
+        requestDto.setCategoryId(2);
 
         catalogue = new Catalogue();
         catalogue.setCatalogueId(1);
@@ -69,7 +67,7 @@ class CatalogueCategoryServiceImplementationTest {
         ResponseEntity<String> response = service.createCatalogueCategory(requestDto);
 
         assertEquals("Catalogue-Category mapping created successfully.", response.getBody());
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
     }
 
     @Test
@@ -78,7 +76,7 @@ class CatalogueCategoryServiceImplementationTest {
 
         ResponseEntity<String> response = service.createCatalogueCategory(requestDto);
 
-        assertEquals(400, response.getStatusCodeValue());
+        assertEquals(400, response.getStatusCode().value());
         assertEquals("Catalogue-Category mapping already exists.", response.getBody());
     }
 

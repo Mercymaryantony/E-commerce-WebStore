@@ -2,14 +2,10 @@ package com.webstore.implementation;
 
 import com.webstore.dto.request.CategoryRequestDto;
 import com.webstore.dto.response.CategoryResponseDto;
-import com.webstore.dto.response.CatalogueInfoDto;
 import com.webstore.entity.Category;
 import com.webstore.entity.CatalogueCategory;
 import com.webstore.repository.CategoryRepository;
-<<<<<<< HEAD
-=======
 import com.webstore.repository.CatalogueCategoryRepository;
->>>>>>> feature-seller
 import com.webstore.repository.ProductRepository;
 import com.webstore.service.CategoryService;
 import com.webstore.util.AuthUtils;
@@ -17,50 +13,28 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.EntityExistsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-<<<<<<< HEAD
-=======
 import jakarta.persistence.EntityManager;
->>>>>>> feature-seller
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 public class CategoryServiceImplementation implements CategoryService {
 
-<<<<<<< HEAD
-    
-    private final CategoryRepository categoryRepository;
-    private final ProductRepository productRepository;
-
-    @Autowired
-    public CategoryServiceImplementation(CategoryRepository categoryRepository, ProductRepository productRepository) {
-        this.categoryRepository = categoryRepository;
-        this.productRepository = productRepository;
-=======
     private static final Logger logger = LoggerFactory.getLogger(CategoryServiceImplementation.class);
 
-    @Autowired
     private final CategoryRepository categoryRepository;
-    
-    @Autowired
     private final CatalogueCategoryRepository catalogueCategoryRepository;
-    
-    @Autowired
     private final ProductRepository productRepository;
-    
-    @Autowired
     private final EntityManager entityManager;
 
+    @Autowired
     public CategoryServiceImplementation(CategoryRepository categoryRepository, 
                                         CatalogueCategoryRepository catalogueCategoryRepository,
                                         ProductRepository productRepository,
@@ -69,7 +43,6 @@ public class CategoryServiceImplementation implements CategoryService {
         this.catalogueCategoryRepository = catalogueCategoryRepository;
         this.productRepository = productRepository;
         this.entityManager = entityManager;
->>>>>>> feature-seller
     }
 
     @Override
@@ -138,8 +111,6 @@ public class CategoryServiceImplementation implements CategoryService {
     }
 
     @Override
-<<<<<<< HEAD
-=======
     @Transactional(readOnly = true)
     public List<CategoryResponseDto> searchByName(String name) {
         logger.info("Searching categories with name: {}", name);
@@ -150,7 +121,6 @@ public class CategoryServiceImplementation implements CategoryService {
     }
 
     @Override
->>>>>>> feature-seller
     @Transactional
     public void deleteCategory(Integer id) {
         // Verify category exists
@@ -204,26 +174,6 @@ public class CategoryServiceImplementation implements CategoryService {
             dto.setUpdatedBy(category.getUpdatedBy());
             logger.debug("✓ Basic fields set for category {}", category.getCategoryId());
 
-<<<<<<< HEAD
-        //get product count for this category
-        Long productCount = categoryRepository.countProductsByCategoryId(category.getCategoryId());
-        dto.setProductCount(productCount !=null ? productCount :0L);
-
-        //get catalogues this category belongs to 
-        List<CategoryResponseDto.CatalogueInfoDto> catalogues = category.getCatalogueCategories().stream()
-                .map(CatalogueCategory::getCatalogue)
-                .map(catalogue -> {
-                    CategoryResponseDto.CatalogueInfoDto catalogueInfo = new CategoryResponseDto.CatalogueInfoDto();
-                    catalogueInfo.setCatalogueId(catalogue.getCatalogueId());
-                    catalogueInfo.setCatalogueName(catalogue.getCatalogueName());
-                    catalogueInfo.setCatalogueDescription(catalogue.getCatalogueDescription());
-                    return catalogueInfo;
-                })
-                .collect(Collectors.toList());
-        dto.setCatalogues(catalogues);
-
-        return dto;
-=======
             // Fetch catalogue information directly using native query
             // This is the most reliable way to get catalogue data
             Integer categoryId = category.getCategoryId();
@@ -232,8 +182,8 @@ public class CategoryServiceImplementation implements CategoryService {
             // First, try native query to get catalogue info directly
             List<Object[]> catalogueData = catalogueCategoryRepository.findCatalogueInfoByCategoryIdNative(categoryId);
             
-            List<CatalogueInfoDto> catalogues = new java.util.ArrayList<>();
-            int productCount = 0;
+            List<CategoryResponseDto.CatalogueInfoDto> catalogues = new java.util.ArrayList<>();
+            Long productCount = 0L;
             
             if (catalogueData != null && !catalogueData.isEmpty()) {
                 logger.info("Found {} catalogues via native query for category {}", catalogueData.size(), categoryId);
@@ -245,7 +195,7 @@ public class CategoryServiceImplementation implements CategoryService {
                         String catalogueName = (String) row[1];
                         String catalogueDescription = (String) row[2];
                         
-                        CatalogueInfoDto catalogueInfo = new CatalogueInfoDto();
+                        CategoryResponseDto.CatalogueInfoDto catalogueInfo = new CategoryResponseDto.CatalogueInfoDto();
                         catalogueInfo.setCatalogueId(catalogueId);
                         catalogueInfo.setCatalogueName(catalogueName);
                         catalogueInfo.setCatalogueDescription(catalogueDescription);
@@ -260,9 +210,12 @@ public class CategoryServiceImplementation implements CategoryService {
                 // Get product count using native query to avoid ConcurrentModificationException
                 // This avoids accessing entity collections which can cause concurrent modification issues
                 Long productCountLong = catalogueCategoryRepository.countProductsByCategoryId(categoryId);
-                productCount = productCountLong != null ? productCountLong.intValue() : 0;
+                productCount = productCountLong != null ? productCountLong : 0L;
             } else {
                 logger.warn("⚠ No catalogues found for category {} via native query", categoryId);
+                // Still get product count even if no catalogues found
+                Long productCountLong = catalogueCategoryRepository.countProductsByCategoryId(categoryId);
+                productCount = productCountLong != null ? productCountLong : 0L;
             }
             
             dto.setProductCount(productCount);
@@ -285,7 +238,7 @@ public class CategoryServiceImplementation implements CategoryService {
                 dto.setCategoryId(category.getCategoryId());
                 dto.setCategoryName(category.getCategoryName());
                 dto.setCategoryDescription(category.getCategoryDescription());
-                dto.setProductCount(0);
+                dto.setProductCount(0L);
                 dto.setCatalogues(List.of());
                 if (category.getCreatedAt() != null) dto.setCreatedAt(category.getCreatedAt());
                 if (category.getCreatedBy() != null) dto.setCreatedBy(category.getCreatedBy());
@@ -294,6 +247,5 @@ public class CategoryServiceImplementation implements CategoryService {
             }
             return dto;
         }
->>>>>>> feature-seller
     }
 }
