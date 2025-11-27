@@ -4,6 +4,7 @@ import com.webstore.validation.ProductValidation;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Min;
 import lombok.Data;
 
 @Data
@@ -21,4 +22,13 @@ public class ProductRequestDto {
 
     @NotNull(groups = ProductValidation.class, message = "Category ID is required")
     private Integer categoryId;
+
+    @NotNull(groups = ProductValidation.class, message = "Seller ID is required")
+    private Integer sellerId;
+
+    @Size(max = 500, groups = ProductValidation.class, message = "Image URL must not exceed 500 characters")
+    private String imageUrl;
+
+    @Min(value = 0, groups = ProductValidation.class, message = "Stock must be 0 or greater")
+    private Integer stock = 0;
 }
