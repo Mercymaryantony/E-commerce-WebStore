@@ -1,462 +1,910 @@
 {
 	"info": {
-		"_postman_id": "b70d8c84-0ac1-4963-86aa-3a99ff0fb6e8",
-		"name": "SpringBoot",
-		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
-		"_exporter_id": "29251420"
+		"_postman_id": "webstore-demo-2024",
+		"name": "WebStore API - Demo Collection",
+		"description": "Complete organized API collection for WebStore backend demo. Follow the numbered folders for best demo flow.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "webstore-demo"
 	},
 	"item": [
 		{
-			"name": "get all products",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": "http://localhost:8080/api/products"
-			},
-			"response": []
-		},
-		{
-			"name": "get products by id",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": "http://localhost:8080/api/products/6"
-			},
-			"response": []
-		},
-		{
-			"name": "get all catalogues",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": "http://localhost:8080/api/catalogues"
-			},
-			"response": []
-		},
-		{
-			"name": "get catalogues by id",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": "http://localhost:8080/api/catalogues/3"
-			},
-			"response": []
-		},
-		{
-			"name": "get catalogue by searched name",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://localhost:8080/api/catalogues/search/name?name=Winter",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8080",
-					"path": [
-						"api",
-						"catalogues",
-						"search",
-						"name"
-					],
-					"query": [
-						{
-							"key": "name",
-							"value": "Winter"
+			"name": "1. Foundation - Currencies",
+			"item": [
+				{
+					"name": "Get All Currencies",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/currencies?page=0&size=10",
+							"host": ["{{base_url}}"],
+							"path": ["api", "currencies"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Retrieve all currencies with pagination"
+					}
+				},
+				{
+					"name": "Get Currency By ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/currencies/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "currencies", "1"]
 						}
-					]
+					}
+				},
+				{
+					"name": "Create Currency",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"currencyCode\": \"USD\",\n    \"currencyName\": \"US Dollar\",\n    \"currencySymbol\": \"$\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/currencies",
+							"host": ["{{base_url}}"],
+							"path": ["api", "currencies"]
+						}
+					}
+				},
+				{
+					"name": "Update Currency",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"currencyCode\": \"EUR\",\n    \"currencyName\": \"Euro\",\n    \"currencySymbol\": \"€\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/currencies/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "currencies", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete Currency",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/currencies/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "currencies", "1"]
+						}
+					}
 				}
-			},
-			"response": []
+			],
+			"description": "Currency management - Start here for demo"
 		},
 		{
-			"name": "get catalogue by searched description",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://localhost:8080/api/catalogues/search/description?description=for",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8080",
-					"path": [
-						"api",
-						"catalogues",
-						"search",
-						"description"
-					],
-					"query": [
-						{
-							"key": "description",
-							"value": "for"
+			"name": "2. Foundation - Categories",
+			"item": [
+				{
+					"name": "Get All Categories",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/categories?page=0&size=10",
+							"host": ["{{base_url}}"],
+							"path": ["api", "categories"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
 						}
-					]
+					}
+				},
+				{
+					"name": "Get Category By ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/categories/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "categories", "1"]
+						}
+					}
+				},
+				{
+					"name": "Search Categories",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/categories/search?searchTerm=electronics",
+							"host": ["{{base_url}}"],
+							"path": ["api", "categories", "search"],
+							"query": [
+								{
+									"key": "searchTerm",
+									"value": "electronics"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Category",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"categoryName\": \"Electronics\",\n    \"categoryDescription\": \"Electronic products and devices\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/categories",
+							"host": ["{{base_url}}"],
+							"path": ["api", "categories"]
+						}
+					}
+				},
+				{
+					"name": "Update Category",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"categoryName\": \"Updated Electronics\",\n    \"categoryDescription\": \"Updated description\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/categories/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "categories", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete Category",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/categories/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "categories", "1"]
+						}
+					}
 				}
-			},
-			"response": []
+			]
 		},
 		{
-			"name": "get all currencies",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": "http://localhost:8080/api/currencies"
-			},
-			"response": []
-		},
-		{
-			"name": "get currency by id",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": "http://localhost:8080/api/currencies/1"
-			},
-			"response": []
-		},
-		{
-			"name": "get product price detail by id",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": "http://localhost:8080/api/product-price/4"
-			},
-			"response": []
-		},
-		{
-			"name": "get all catalogue_category pairs",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": "http://localhost:8080/api/catalogue-categories"
-			},
-			"response": []
-		},
-		{
-			"name": "get all categories",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": "http://localhost:8080/api/categories"
-			},
-			"response": []
-		},
-		{
-			"name": "get categories by id",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": "http://localhost:8080/api/categories/2"
-			},
-			"response": []
-		},
-		{
-			"name": "create catalogue-category",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"catalogueId\" : 2 ,\n    \"categoryId\" : 1 \n}",
-					"options": {
-						"raw": {
-							"language": "json"
+			"name": "3. Foundation - Catalogues",
+			"item": [
+				{
+					"name": "Get All Catalogues",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/catalogues",
+							"host": ["{{base_url}}"],
+							"path": ["api", "catalogues"]
 						}
 					}
 				},
-				"url": "http://localhost:8080/api/catalogue-categories"
-			},
-			"response": []
-		},
-		{
-			"name": "create product",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"productName\" : \"Test New Product\",\n    \"productDescription\" : \"Test Description\",\n    \"categoryId\" : 4\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+				{
+					"name": "Get Catalogue By ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/catalogues/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "catalogues", "1"]
 						}
 					}
 				},
-				"url": "http://localhost:8080/api/products"
-			},
-			"response": []
-		},
-		{
-			"name": "create category",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"categoryName\" : \"Test Category\",\n    \"categoryDescription\" : \"Test Category Description\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+				{
+					"name": "Search Catalogues By Name",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/catalogues/search?name=Summer",
+							"host": ["{{base_url}}"],
+							"path": ["api", "catalogues", "search"],
+							"query": [
+								{
+									"key": "name",
+									"value": "Summer"
+								}
+							]
 						}
 					}
 				},
-				"url": "http://localhost:8080/api/categories"
-			},
-			"response": []
-		},
-		{
-			"name": "create currency",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"currencyCode\" : \"TC\" ,\n    \"currencyName\" : \"Currency\",\n    \"currencySymbol\" : \"<>\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+				{
+					"name": "Create Catalogue",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"catalogueName\": \"Summer Collection 2024\",\n    \"catalogueDescription\": \"Latest summer products\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/catalogues",
+							"host": ["{{base_url}}"],
+							"path": ["api", "catalogues"]
 						}
 					}
 				},
-				"url": "http://localhost:8080/api/currencies"
-			},
-			"response": []
-		},
-		{
-			"name": "create catalogue",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"catalogueName\" : \"\",\n    \"catalogueDescription\" : \"\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+				{
+					"name": "Update Catalogue",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"catalogueName\": \"Updated Summer Collection\",\n    \"catalogueDescription\": \"Updated description\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/catalogues/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "catalogues", "1"]
 						}
 					}
 				},
-				"url": "http://localhost:8080/api/catalogues"
-			},
-			"response": []
+				{
+					"name": "Delete Catalogue",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/catalogues/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "catalogues", "1"]
+						}
+					}
+				}
+			]
 		},
 		{
-			"name": "create product price pair",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"productId\" : 5 ,\n    \"currencyId\" : 1,\n    \"priceAmount\" : 98.634\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+			"name": "4. Products",
+			"item": [
+				{
+					"name": "Get All Products",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products"]
 						}
 					}
 				},
-				"url": "http://localhost:8080/api/product-price"
-			},
-			"response": []
-		},
-		{
-			"name": "create user",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"username\" : \"Test_User\" ,\n    \"email\" : \"test@gmail.com\" ,\n    \"fullName\" : \"New Test User\" ,\n    \"role\" : \"Test Role\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+				{
+					"name": "Get Product By ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products", "1"]
 						}
 					}
 				},
-				"url": "http://localhost:8080/api/users"
-			},
-			"response": []
-		},
-		{
-			"name": "update users by id",
-			"request": {
-				"method": "PUT",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"username\" : \"Updated_Name\",\n    \"role\" : \"Updated Role\" ,\n    \"email\" : \"updated.test@gmail.com\",\n    \"fullName\" : \"Updated Full Name\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+				{
+					"name": "Search Products",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products/search?searchTerm=laptop",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products", "search"],
+							"query": [
+								{
+									"key": "searchTerm",
+									"value": "laptop"
+								}
+							]
 						}
 					}
 				},
-				"url": "http://localhost:8080/api/users/2"
-			},
-			"response": []
-		},
-		{
-			"name": "delete users by id",
-			"request": {
-				"method": "DELETE",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "",
-					"options": {
-						"raw": {
-							"language": "json"
+				{
+					"name": "Create Product",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productName\": \"Laptop\",\n    \"productDescription\": \"High-performance laptop\",\n    \"categoryId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/products",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products"]
 						}
 					}
 				},
-				"url": "http://localhost:8080/api/users/2"
-			},
-			"response": []
-		},
-		{
-			"name": "update currency by id",
-			"request": {
-				"method": "PUT",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"currencySymbol\" : \":)\" ,\n    \"currencyCode\" : \"UCS\" ,\n    \"currencyName\" : \"UCurrency\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+				{
+					"name": "Update Product",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productName\": \"Updated Laptop\",\n    \"productDescription\": \"Updated description\",\n    \"categoryId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/products/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products", "1"]
 						}
 					}
 				},
-				"url": "http://localhost:8080/api/currencies/2"
-			},
-			"response": []
+				{
+					"name": "Delete Product",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/products/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products", "1"]
+						}
+					}
+				}
+			]
 		},
 		{
-			"name": "delete currency by id",
-			"request": {
-				"method": "DELETE",
-				"header": [],
-				"url": "http://localhost:8080/api/currencies/2"
-			},
-			"response": []
-		},
-		{
-			"name": "update category by id",
-			"request": {
-				"method": "PUT",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"categoryName\" : \"Update Test Category\",\n    \"categoryDescription\" : \"Update Test Category Description\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+			"name": "5. Product Prices",
+			"item": [
+				{
+					"name": "Get All Product Prices",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/product-price",
+							"host": ["{{base_url}}"],
+							"path": ["api", "product-price"]
 						}
 					}
 				},
-				"url": "http://localhost:8080/api/categories/2"
-			},
-			"response": []
-		},
-		{
-			"name": "delete category by id",
-			"request": {
-				"method": "DELETE",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "",
-					"options": {
-						"raw": {
-							"language": "json"
+				{
+					"name": "Get Product Price By ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/product-price/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "product-price", "1"]
 						}
 					}
 				},
-				"url": "http://localhost:8080/api/categories/3"
-			},
-			"response": []
-		},
-		{
-			"name": "update product price by id",
-			"request": {
-				"method": "PUT",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"priceAmount\" : 145\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+				{
+					"name": "Create Product Price",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productId\": 1,\n    \"currencyId\": 1,\n    \"priceAmount\": 50000\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/product-price",
+							"host": ["{{base_url}}"],
+							"path": ["api", "product-price"]
 						}
 					}
 				},
-				"url": "http://localhost:8080/api/product-price/6"
-			},
-			"response": []
-		},
-		{
-			"name": "delete product price by id",
-			"request": {
-				"method": "DELETE",
-				"header": [],
-				"url": "http://localhost:8080/api/product-price/6"
-			},
-			"response": []
-		},
-		{
-			"name": "update products by id",
-			"request": {
-				"method": "PUT",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"productName\" : \"Update New Product\",\n    \"productDescription\" : \"Update Test Description\",\n    \"categoryId\" : 4\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+				{
+					"name": "Update Product Price",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "55000"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/product-price/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "product-price", "1"]
 						}
 					}
 				},
-				"url": "http://localhost:8080/api/products/2"
-			},
-			"response": []
+				{
+					"name": "Delete Product Price",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/product-price/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "product-price", "1"]
+						}
+					}
+				}
+			]
 		},
 		{
-			"name": "delete products by id",
-			"request": {
-				"method": "DELETE",
-				"header": [],
-				"url": "http://localhost:8080/api/products/5"
-			},
-			"response": []
-		},
-		{
-			"name": "update catalogue by id",
-			"request": {
-				"method": "PUT",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"catalogueName\" : \"Update Catalogue Name\",\n    \"catalogueDescription\" : \"Update Catalogue Description\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+			"name": "6. Catalogue-Categories",
+			"item": [
+				{
+					"name": "Get All Catalogue-Category Mappings",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/catalogue-categories",
+							"host": ["{{base_url}}"],
+							"path": ["api", "catalogue-categories"]
 						}
 					}
 				},
-				"url": "http://localhost:8080/api/catalogues/5"
-			},
-			"response": []
+				{
+					"name": "Create Catalogue-Category Mapping",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"catalogueId\": 1,\n    \"categoryId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/catalogue-categories",
+							"host": ["{{base_url}}"],
+							"path": ["api", "catalogue-categories"]
+						}
+					}
+				}
+			]
 		},
 		{
-			"name": "New Request",
-			"request": {
-				"method": "DELETE",
-				"header": [],
-				"url": "http://localhost:8080/api/catalogues/3"
-			},
-			"response": []
+			"name": "7. Users",
+			"item": [
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/users",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users"]
+						}
+					}
+				},
+				{
+					"name": "Get User By ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/users/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", "1"]
+						}
+					}
+				},
+				{
+					"name": "Create User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"john_doe\",\n    \"email\": \"john@example.com\",\n    \"fullName\": \"John Doe\",\n    \"role\": \"Customer\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users"]
+						}
+					}
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"john_doe_updated\",\n    \"email\": \"john.updated@example.com\",\n    \"fullName\": \"John Doe Updated\",\n    \"role\": \"Admin\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/users/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "8. Sellers",
+			"item": [
+				{
+					"name": "Get All Sellers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/sellers",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sellers"]
+						}
+					}
+				},
+				{
+					"name": "Get Seller By ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/sellers/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sellers", "1"]
+						}
+					}
+				},
+				{
+					"name": "Search Sellers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/sellers/search?keyword=john",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sellers", "search"],
+							"query": [
+								{
+									"key": "keyword",
+									"value": "john"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Sellers By Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/sellers/status/ACTIVE",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sellers", "status", "ACTIVE"]
+						}
+					}
+				},
+				{
+					"name": "Get Sellers Joined After Date",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/sellers/joined-after?date=2024-01-01",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sellers", "joined-after"],
+							"query": [
+								{
+									"key": "date",
+									"value": "2024-01-01"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Sellers Joined Between Dates",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/sellers/joined-between?startDate=2024-01-01&endDate=2024-12-31",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sellers", "joined-between"],
+							"query": [
+								{
+									"key": "startDate",
+									"value": "2024-01-01"
+								},
+								{
+									"key": "endDate",
+									"value": "2024-12-31"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Count Sellers By Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/sellers/count/ACTIVE",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sellers", "count", "ACTIVE"]
+						}
+					}
+				},
+				{
+					"name": "Create Seller",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Seller\",\n    \"email\": \"john.seller@example.com\",\n    \"status\": \"ACTIVE\",\n    \"joiningDate\": \"2024-01-15\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/sellers",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sellers"]
+						}
+					}
+				},
+				{
+					"name": "Update Seller",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Seller Updated\",\n    \"email\": \"john.updated@example.com\",\n    \"status\": \"ACTIVE\",\n    \"joiningDate\": \"2024-01-15\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/sellers/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sellers", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete Seller",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/sellers/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sellers", "1"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
 		}
 	]
 }
