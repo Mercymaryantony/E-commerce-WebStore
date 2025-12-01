@@ -35,6 +35,16 @@ public class Product extends BasicEntities {
     @JoinColumn(name = "catalogue_category_id", nullable = false)
     private CatalogueCategory catalogueCategory;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seller_id", nullable = false)
+    private Seller seller;
+
+    @Column(name = "image_url", length = 500)
+    private String imageUrl;
+
+    @Column(name = "stock")
+    private Integer stock = 0;
+
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductPrice> productPrices = new ArrayList<>();
 }

@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Integer> {
@@ -53,4 +54,39 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     @Modifying
     @Query("DELETE FROM Product p WHERE p.catalogueCategory.category.categoryId = :categoryId")
     void deleteByCategoryId(@Param("categoryId") Integer categoryId);
+
+    // Search by product name (case-insensitive, partial match) with seller
+    @Query("SELECT DISTINCT p FROM Product p " +
+           "LEFT JOIN FETCH p.seller s " +
+           "WHERE LOWER(p.productName) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
+    List<Product> searchByProductName(@Param("searchTerm") String searchTerm);
+
+    // Search by product description (case-insensitive, partial match) with seller
+    @Query("SELECT DISTINCT p FROM Product p " +
+           "LEFT JOIN FETCH p.seller s " +
+           "WHERE LOWER(p.productDescription) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
+    List<Product> searchByProductDescription(@Param("searchTerm") String searchTerm);
+
+    // Search by both name and description with seller
+    @Query("SELECT DISTINCT p FROM Product p " +
+           "LEFT JOIN FETCH p.seller s " +
+           "WHERE LOWER(p.productName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
+           "OR LOWER(p.productDescription) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
+    List<Product> searchByNameOrDescription(@Param("searchTerm") String searchTerm);
+
+    // Find all products with seller eagerly loaded
+    @Query("SELECT DISTINCT p FROM Product p " +
+           "LEFT JOIN FETCH p.seller s " +
+           "ORDER BY p.productId")
+    List<Product> findAllWithSeller();
+
+    // Find product by ID with seller eagerly loaded
+    @Query("SELECT DISTINCT p FROM Product p " +
+           "LEFT JOIN FETCH p.seller s " +
+           "WHERE p.productId = :id")
+    Optional<Product> findByIdWithSeller(@Param("id") Integer id);
+
+    // Get seller_id directly from products table
+    @Query(value = "SELECT seller_id FROM web_store.products WHERE product_id = :productId", nativeQuery = true)
+    Integer findSellerIdByProductId(@Param("productId") Integer productId);
 }
