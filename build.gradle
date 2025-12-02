@@ -47,8 +47,7 @@ checkstyle {
     toolVersion = '10.12.5'
     configFile = file('checkstyle.xml')
     configProperties = [
-        'suppressionsFile': file('suppressions.xml'),
-        'config_loc': projectDir
+        'suppressionsFile': file('suppressions.xml')
     ]
 }
 
