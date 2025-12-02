@@ -9,8 +9,9 @@ COPY gradle ./gradle
 # Copy source code
 COPY src ./src
 
-# Build the application (skip tests for faster build)
-RUN gradle clean build -x test --no-daemon
+# Build the application (skip tests, checkstyle, and PMD for faster build)
+# Checkstyle and PMD are already run in CI pipeline separately
+RUN gradle clean build -x test -x checkstyleMain -x checkstyleTest -x pmdMain -x pmdTest --no-daemon
 
 # Stage 2: Create runtime image
 FROM eclipse-temurin:17-jre-alpine
