@@ -29,10 +29,9 @@ public class CatalogueServiceImplementation implements CatalogueService {
     @Autowired
     private final CategoryService categoryService;
 
-
     public CatalogueServiceImplementation(CatalogueRepository catalogueRepository,
-                                          CatalogueCategoryRepository catalogueCategoryRepository,
-                                          CategoryService categoryService) {
+            CatalogueCategoryRepository catalogueCategoryRepository,
+            CategoryService categoryService) {
         this.catalogueRepository = catalogueRepository;
         this.catalogueCategoryRepository = catalogueCategoryRepository;
         this.categoryService = categoryService;
@@ -66,7 +65,6 @@ public class CatalogueServiceImplementation implements CatalogueService {
         return convertToDto(catalogue);
     }
 
-
     @Override
     public CatalogueResponseDto updateCatalogue(Integer id, CatalogueRequestDto dto) {
         Catalogue catalogue = catalogueRepository.findById(id)
@@ -83,6 +81,18 @@ public class CatalogueServiceImplementation implements CatalogueService {
     public void deleteCatalogue(Integer id) {
         Catalogue catalogue = catalogueRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Catalogue not found"));
+
+        // Check if catalogue has associated categories
+        // Force fetch the catalogueCategories (LAZY loading)
+        catalogue.getCatalogueCategories().size(); // This triggers the fetch
+
+        if (catalogue.getCatalogueCategories() != null && !catalogue.getCatalogueCategories().isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Cannot delete catalogue. Please delete the corresponding categories first, then you can delete the catalogue.");
+        }
+
+        // If no categories are associated, proceed with deletion
         catalogueRepository.delete(catalogue);
     }
 
@@ -94,13 +104,14 @@ public class CatalogueServiceImplementation implements CatalogueService {
                 .collect(Collectors.toList());
     }
 
-//    @Override
-//    public List<CatalogueResponseDto> searchByDescription(String description) {
-//        return catalogueRepository.findByCatalogueDescriptionContainingIgnoreCase(description)
-//                .stream()
-//                .map(this::convertToDto)
-//                .collect(Collectors.toList());
-//    }
+    // @Override
+    // public List<CatalogueResponseDto> searchByDescription(String description) {
+    // return
+    // catalogueRepository.findByCatalogueDescriptionContainingIgnoreCase(description)
+    // .stream()
+    // .map(this::convertToDto)
+    // .collect(Collectors.toList());
+    // }
 
     public List<CategoryResponseDto> getCategoriesByCatalogueId(Integer catalogueId) {
         // Find the catalogue

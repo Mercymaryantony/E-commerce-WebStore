@@ -201,7 +201,7 @@ public class CategoryServiceImplementation implements CategoryService {
                         catalogueInfo.setCatalogueDescription(catalogueDescription);
                         catalogues.add(catalogueInfo);
                         
-                        logger.info("✓ Added catalogue ID: {}, Name: {}", catalogueId, catalogueName);
+                        logger.info(" Added catalogue ID: {}, Name: {}", catalogueId, catalogueName);
                     } catch (Exception e) {
                         logger.error("Error processing catalogue data: {}", e.getMessage(), e);
                     }
@@ -223,7 +223,7 @@ public class CategoryServiceImplementation implements CategoryService {
             logger.info("Category {}: productCount={}, catalogues={}", 
                        category.getCategoryId(), productCount, catalogues.size());
 
-            logger.debug("✓ Successfully completed mapToResponse for category {}", category.getCategoryId());
+            logger.debug("Successfully completed mapToResponse for category {}", category.getCategoryId());
             return dto;
         } catch (Exception e) {
             logger.error("=== FATAL ERROR in mapToResponse for category {} ===", 
