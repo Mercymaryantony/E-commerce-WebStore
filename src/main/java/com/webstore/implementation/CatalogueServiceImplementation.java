@@ -14,7 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,6 +40,19 @@ public class CatalogueServiceImplementation implements CatalogueService {
         this.categoryService = categoryService;
     }
 
+    // Update the getAllCatalogues method (around line 54)
+    @Override
+    @Transactional(readOnly = true)
+    public List<CatalogueResponseDto> getAllCatalogues(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Catalogue> cataloguePage = catalogueRepository.findAll(pageable);
+
+        return cataloguePage.getContent()
+                .stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
     @Override
     public CatalogueResponseDto createCatalogue(CatalogueRequestDto dto) {
         Catalogue catalogue = new Catalogue();
@@ -50,13 +66,6 @@ public class CatalogueServiceImplementation implements CatalogueService {
         return convertToDto(catalogueRepository.save(catalogue));
     }
 
-    @Override
-    public List<CatalogueResponseDto> getAllCatalogues() {
-        return catalogueRepository.findAll()
-                .stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
-    }
 
     @Override
     public CatalogueResponseDto getCatalogueById(Integer id) {

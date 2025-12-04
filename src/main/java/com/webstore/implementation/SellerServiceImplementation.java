@@ -13,7 +13,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,18 +25,17 @@ import java.util.stream.Collectors;
 @Service
 public class SellerServiceImplementation implements SellerService {
 
-   
     private final SellerRepository sellerRepository;
 
-    /*Constructor-based dependency injection*/
+    /* Constructor-based dependency injection */
     @Autowired
     public SellerServiceImplementation(SellerRepository sellerRepository) {
         this.sellerRepository = sellerRepository;
     }
 
-    /*CREATE SELLER*/
+    /* CREATE SELLER */
     @Override
-    @Transactional  // If anything fails, roll back the database changes
+    @Transactional // If anything fails, roll back the database changes
     public SellerResponseDto createSeller(SellerRequestDto requestDto) {
         // Log for debugging - helps track what's happening
         log.info("Creating new seller with email: {}", requestDto.getEmail());
@@ -45,14 +46,13 @@ public class SellerServiceImplementation implements SellerService {
             // Throw error with HTTP 400 (Bad Request)
             log.error("Email already exists: {}", requestDto.getEmail());
             throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST, 
-                "Email already exists: " + requestDto.getEmail()
-            );
+                    HttpStatus.BAD_REQUEST,
+                    "Email already exists: " + requestDto.getEmail());
         }
 
         // Create new Seller entity
         Seller seller = new Seller();
-        
+
         // Map data from DTO to Entity
         mapDtoToEntity(requestDto, seller);
 
@@ -64,30 +64,29 @@ public class SellerServiceImplementation implements SellerService {
 
         // Save to database - JPA automatically generates ID
         Seller savedSeller = sellerRepository.save(seller);
-        
+
         log.info("Successfully created seller with ID: {}", savedSeller.getSellerId());
 
         // Convert entity to response DTO and return
         return convertToResponseDto(savedSeller);
     }
 
-    /*GET ALL SELLERS*/
     @Override
     @Transactional(readOnly = true)
-    public List<SellerResponseDto> getAllSellers() {
-        log.info("Fetching all sellers");
-
-        
-        // stream() - Convert list to stream for processing
-        // map() - Transform each Seller to SellerResponseDto
-        // collect() - Collect results back into a list
-        return sellerRepository.findAll()
+    public List<SellerResponseDto> getAllSellers(int page, int size) {
+        log.info("Fetching sellers - page: {}, size: {}", page, size);
+    
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Seller> sellerPage = sellerRepository.findAll(pageable);
+    
+        return sellerPage.getContent()
                 .stream()
                 .map(this::convertToResponseDto)
                 .collect(Collectors.toList());
     }
+    
 
-    /*GET SELLER BY ID*/
+    /* GET SELLER BY ID */
     @Override
     @Transactional(readOnly = true)
     public SellerResponseDto getSellerById(Integer sellerId) {
@@ -105,7 +104,7 @@ public class SellerServiceImplementation implements SellerService {
         return convertToResponseDto(seller);
     }
 
-    /*UPDATE SELLER*/
+    /* UPDATE SELLER */
     @Override
     @Transactional
     public SellerResponseDto updateSeller(Integer sellerId, SellerRequestDto requestDto) {
@@ -143,7 +142,7 @@ public class SellerServiceImplementation implements SellerService {
         return convertToResponseDto(updatedSeller);
     }
 
-    /*DELETE SELLER*/
+    /* DELETE SELLER */
     @Override
     @Transactional
     public void deleteSeller(Integer sellerId) {
@@ -163,7 +162,7 @@ public class SellerServiceImplementation implements SellerService {
         log.info("Successfully deleted seller with ID: {}", sellerId);
     }
 
-    /*SEARCH SELLERS*/
+    /* SEARCH SELLERS */
     @Override
     @Transactional(readOnly = true)
     public List<SellerResponseDto> searchSellers(String keyword) {
@@ -175,7 +174,7 @@ public class SellerServiceImplementation implements SellerService {
                 .collect(Collectors.toList());
     }
 
-    /*GET SELLERS BY STATUS*/
+    /* GET SELLERS BY STATUS */
     @Override
     @Transactional(readOnly = true)
     public List<SellerResponseDto> getSellersByStatus(SellerStatus status) {
@@ -187,7 +186,7 @@ public class SellerServiceImplementation implements SellerService {
                 .collect(Collectors.toList());
     }
 
-    /*GET SELLERS JOINED AFTER DATE*/
+    /* GET SELLERS JOINED AFTER DATE */
     @Override
     @Transactional(readOnly = true)
     public List<SellerResponseDto> getSellersJoinedAfter(LocalDate date) {
@@ -199,7 +198,7 @@ public class SellerServiceImplementation implements SellerService {
                 .collect(Collectors.toList());
     }
 
-    /*GET SELLERS JOINED BETWEEN DATES*/
+    /* GET SELLERS JOINED BETWEEN DATES */
     @Override
     @Transactional(readOnly = true)
     public List<SellerResponseDto> getSellersJoinedBetween(LocalDate startDate, LocalDate endDate) {
@@ -211,7 +210,7 @@ public class SellerServiceImplementation implements SellerService {
                 .collect(Collectors.toList());
     }
 
-    /*COUNT SELLERS BY STATUS*/
+    /* COUNT SELLERS BY STATUS */
     @Override
     @Transactional(readOnly = true)
     public long countSellersByStatus(SellerStatus status) {
@@ -219,7 +218,9 @@ public class SellerServiceImplementation implements SellerService {
         return sellerRepository.countByStatus(status);
     }
 
-    /* Map Request DTO to EntityThis method is private - only used within this class*/
+    /*
+     * Map Request DTO to EntityThis method is private - only used within this class
+     */
     private void mapDtoToEntity(SellerRequestDto dto, Seller seller) {
         seller.setName(dto.getName());
         seller.setEmail(dto.getEmail());
@@ -231,8 +232,10 @@ public class SellerServiceImplementation implements SellerService {
         }
     }
 
-    /*Convert Entity to Response DTO
-     *It converts database entity to API response format*/
+    /*
+     * Convert Entity to Response DTO
+     * It converts database entity to API response format
+     */
     private SellerResponseDto convertToResponseDto(Seller seller) {
         SellerResponseDto dto = new SellerResponseDto();
         dto.setSellerId(seller.getSellerId());
@@ -250,4 +253,3 @@ public class SellerServiceImplementation implements SellerService {
         return dto;
     }
 }
-

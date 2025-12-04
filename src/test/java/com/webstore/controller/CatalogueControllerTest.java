@@ -52,8 +52,8 @@ class CatalogueControllerTest {
 
     @Test
     void testGetAllCatalogues() {
-        when(catalogueService.getAllCatalogues()).thenReturn(Arrays.asList(responseDto));
-        ResponseEntity<List<CatalogueResponseDto>> response = catalogueController.getAllCatalogues();
+        when(catalogueService.getAllCatalogues(0,Integer.MAX_VALUE)).thenReturn(Arrays.asList(responseDto));
+        ResponseEntity<List<CatalogueResponseDto>> response = catalogueController.getAllCatalogues(0,Integer.MAX_VALUE);
 
         assertEquals(200, response.getStatusCodeValue());
         assertEquals(1, response.getBody().size());

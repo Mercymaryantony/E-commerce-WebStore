@@ -14,7 +14,7 @@ public interface SellerService {
     SellerResponseDto createSeller(SellerRequestDto sellerRequestDto);
 
     /* Get all sellers*/
-    List<SellerResponseDto> getAllSellers();
+    List<SellerResponseDto> getAllSellers(int page, int size);
 
     /*Get a single seller by ID*/
     SellerResponseDto getSellerById(Integer sellerId);

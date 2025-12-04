@@ -14,6 +14,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -57,14 +62,16 @@ class CatalogueServiceImplementationTest {
 
     @Test
     void whenGetAllCatalogues_thenReturnsCatalogueList() {
-        when(catalogueRepository.findAll()).thenReturn(List.of(catalogue));
+        Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE);
+        Page<Catalogue> cataloguePage = new PageImpl<>(List.of(catalogue));
+        when(catalogueRepository.findAll(pageable)).thenReturn(cataloguePage);
 
-        List<CatalogueResponseDto> result = catalogueService.getAllCatalogues();
+        List<CatalogueResponseDto> result = catalogueService.getAllCatalogues(0, Integer.MAX_VALUE);
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getCatalogueName()).isEqualTo("Books");
 
-        verify(catalogueRepository).findAll();
+        verify(catalogueRepository).findAll(pageable);
     }
 
     @Test

@@ -29,8 +29,20 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProductResponseDto>> getAllProducts() {
-        List<ProductResponseDto> products = productService.getAllProducts();
+    public ResponseEntity<List<ProductResponseDto>> getAllProducts(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+
+        List<ProductResponseDto> products;
+
+        // If pagination parameters are provided, use pagination
+        if (page != null && size != null) {
+            products = productService.getAllProducts(page, size);
+        } else {
+            // If no pagination parameters, return all products
+            products = productService.getAllProducts(0, Integer.MAX_VALUE);
+        }
+
         return ResponseEntity.ok(products);
     }
 
@@ -42,7 +54,7 @@ public class ProductController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ProductResponseDto> updateProduct(@PathVariable Integer id,
-                                                            @Valid @RequestBody ProductRequestDto dto) {
+            @Valid @RequestBody ProductRequestDto dto) {
         ProductResponseDto updatedProduct = productService.updateProduct(id, dto);
         return ResponseEntity.ok(updatedProduct);
     }

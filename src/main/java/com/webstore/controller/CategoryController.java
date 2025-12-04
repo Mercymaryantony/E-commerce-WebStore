@@ -23,10 +23,19 @@ public class CategoryController {
 
     @GetMapping
     public ResponseEntity<List<CategoryResponseDto>> getAllCategories(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size) {
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
 
-        List<CategoryResponseDto> categories = categoryService.getAllCategories(page, size);
+        List<CategoryResponseDto> categories;
+
+        // if paginataion parameters are provided 
+        if (page != null && size != null) {
+            categories = categoryService.getAllCategories(page, size);
+        } else {
+            // If no pagination parameters, return all categories
+            categories = categoryService.getAllCategories(0, Integer.MAX_VALUE);
+        }
+
         if (categories.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -38,9 +47,10 @@ public class CategoryController {
         return ResponseEntity.ok(categoryService.getCategoryById(id));
     }
 
-    // Search option for categories 
+    // Search option for categories
     @GetMapping("/search")
-    public ResponseEntity<List<CategoryResponseDto>> searchCategories(@RequestParam(required = false) String searchTerm) {
+    public ResponseEntity<List<CategoryResponseDto>> searchCategories(
+            @RequestParam(required = false) String searchTerm) {
         List<CategoryResponseDto> categories;
         if (searchTerm == null || searchTerm.trim().isEmpty()) {
             categories = categoryService.getAllCategories(0, 100);
@@ -58,11 +68,11 @@ public class CategoryController {
         CategoryResponseDto created = categoryService.createCategory(dto);
         return ResponseEntity.status(201).body(created);
     }
-    
+
     // Updating based on id
     @PutMapping("/{id}")
     public ResponseEntity<CategoryResponseDto> updateCategory(@PathVariable Integer id,
-                                                              @RequestBody @Valid CategoryRequestDto dto) {
+            @RequestBody @Valid CategoryRequestDto dto) {
         return ResponseEntity.ok(categoryService.updateCategory(id, dto));
     }
 

@@ -20,7 +20,7 @@ public class CatalogueController {
     private CatalogueService catalogueService;
 
     @Autowired
-    @Qualifier("catalogueServiceImplementation")  // Assuming you have a specific implementation to inject
+    @Qualifier("catalogueServiceImplementation") // Assuming you have a specific implementation to inject
     public void setCatalogueService(CatalogueService catalogueService) {
         this.catalogueService = catalogueService;
     }
@@ -31,23 +31,30 @@ public class CatalogueController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CatalogueResponseDto>> getAllCatalogues() {
-        List<CatalogueResponseDto> catalogues = catalogueService.getAllCatalogues();
+    public ResponseEntity<List<CatalogueResponseDto>> getAllCatalogues(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+
+        List<CatalogueResponseDto> catalogues;
+
+        // If pagination parameters are provided, use pagination
+        if (page != null && size != null) {
+            catalogues = catalogueService.getAllCatalogues(page, size);
+        } else {
+            // If no pagination parameters, return all catalogues
+            catalogues = catalogueService.getAllCatalogues(0, Integer.MAX_VALUE);
+        }
+
         if (catalogues.isEmpty()) {
-            return ResponseEntity.noContent().build();  // 204 No Content
+            return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(catalogues);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<CatalogueResponseDto> getCatalogueById(@PathVariable Integer id) {
-        return ResponseEntity.ok(catalogueService.getCatalogueById(id));
-    }
-
     @GetMapping("/search")
-    public ResponseEntity<List<CatalogueResponseDto>> searchCatalogues(@RequestParam String name){
-        System.out.println("Searching catalogues with keywords: "+name);
-        List<CatalogueResponseDto> catalogues=catalogueService.searchByName(name);
+    public ResponseEntity<List<CatalogueResponseDto>> searchCatalogues(@RequestParam String name) {
+        System.out.println("Searching catalogues with keywords: " + name);
+        List<CatalogueResponseDto> catalogues = catalogueService.searchByName(name);
         return ResponseEntity.ok(catalogues);
     }
 
