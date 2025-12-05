@@ -12,7 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
+import com.webstore.dto.response.SellerDetailsResponseDto;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -196,5 +196,18 @@ public class SellerController {
         long count = sellerService.countSellersByStatus(status);
 
         return ResponseEntity.ok(count);
+    }
+
+    /*GET SELLER DETAILS WITH CATALOGUES AND CATEGORIES
+     * Endpoint: GET /api/sellers/{id}/details*/
+    @GetMapping("/{id}/details")
+    public ResponseEntity<SellerDetailsResponseDto> getSellerDetailsWithCataloguesAndCategories(
+            @PathVariable Integer id) {
+
+        log.info("GET /api/sellers/{}/details - Fetching seller details with catalogues and categories", id);
+
+        SellerDetailsResponseDto sellerDetails = sellerService.getSellerDetailsWithCataloguesAndCategories(id);
+
+        return ResponseEntity.ok(sellerDetails);
     }
 }
