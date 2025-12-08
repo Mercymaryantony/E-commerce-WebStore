@@ -3,9 +3,12 @@ package com.webstore.controller;
 import com.webstore.dto.request.CategoryRequestDto;
 import com.webstore.dto.response.CategoryResponseDto;
 import com.webstore.service.CategoryService;
+import com.webstore.util.SecurityContextUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.validation.Valid;
 import java.util.List;
@@ -28,11 +31,9 @@ public class CategoryController {
 
         List<CategoryResponseDto> categories;
 
-        // if paginataion parameters are provided 
         if (page != null && size != null) {
             categories = categoryService.getAllCategories(page, size);
         } else {
-            // If no pagination parameters, return all categories
             categories = categoryService.getAllCategories(0, Integer.MAX_VALUE);
         }
 
@@ -47,7 +48,6 @@ public class CategoryController {
         return ResponseEntity.ok(categoryService.getCategoryById(id));
     }
 
-    // Search option for categories
     @GetMapping("/search")
     public ResponseEntity<List<CategoryResponseDto>> searchCategories(
             @RequestParam(required = false) String searchTerm) {
@@ -65,19 +65,30 @@ public class CategoryController {
 
     @PostMapping
     public ResponseEntity<CategoryResponseDto> createCategory(@RequestBody @Valid CategoryRequestDto dto) {
+        String role = SecurityContextUtils.getCurrentRole();
+        if (role != null && "SELLER".equals(role)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sellers cannot create categories");
+        }
         CategoryResponseDto created = categoryService.createCategory(dto);
         return ResponseEntity.status(201).body(created);
     }
 
-    // Updating based on id
     @PutMapping("/{id}")
     public ResponseEntity<CategoryResponseDto> updateCategory(@PathVariable Integer id,
             @RequestBody @Valid CategoryRequestDto dto) {
+        String role = SecurityContextUtils.getCurrentRole();
+        if (role != null && "SELLER".equals(role)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sellers cannot update categories");
+        }
         return ResponseEntity.ok(categoryService.updateCategory(id, dto));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCategory(@PathVariable Integer id) {
+        String role = SecurityContextUtils.getCurrentRole();
+        if (role != null && "SELLER".equals(role)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sellers cannot delete categories");
+        }
         categoryService.deleteCategory(id);
         return ResponseEntity.noContent().build();
     }

@@ -9,6 +9,7 @@ import com.webstore.repository.CatalogueRepository;
 import com.webstore.service.CatalogueService;
 import com.webstore.service.CategoryService;
 import com.webstore.util.AuthUtils;
+import com.webstore.util.SecurityContextUtils;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,11 +26,11 @@ import java.util.stream.Collectors;
 @Service
 public class CatalogueServiceImplementation implements CatalogueService {
 
-    @Autowired
+    
     private final CatalogueRepository catalogueRepository;
-    @Autowired
+    
     private final CatalogueCategoryRepository catalogueCategoryRepository;
-    @Autowired
+    
     private final CategoryService categoryService;
 
     public CatalogueServiceImplementation(CatalogueRepository catalogueRepository,
@@ -40,34 +41,54 @@ public class CatalogueServiceImplementation implements CatalogueService {
         this.categoryService = categoryService;
     }
 
-    // Update the getAllCatalogues method (around line 54)
     @Override
     @Transactional(readOnly = true)
     public List<CatalogueResponseDto> getAllCatalogues(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Catalogue> cataloguePage = catalogueRepository.findAll(pageable);
+        List<Catalogue> catalogues;
+        String role = SecurityContextUtils.getCurrentRole();
+        if (role != null && "SELLER".equals(role)) {
+            Integer sellerId = SecurityContextUtils.getCurrentSellerId();
+            if (sellerId == null) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Seller ID not found in token");
+            }
+            // Get all catalogues that have products from this seller
+            List<Catalogue> allSellerCatalogues = catalogueRepository.findBySellerId(sellerId);
+            // Apply pagination manually
+            int start = page * size;
+            int end = Math.min(start + size, allSellerCatalogues.size());
+            if (start < allSellerCatalogues.size()) {
+                catalogues = allSellerCatalogues.subList(Math.max(0, start), end);
+            } else {
+                catalogues = new ArrayList<>();
+            }
+        } else {
+            // Admin or unauthenticated - return all catalogues with pagination
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Catalogue> cataloguePage = catalogueRepository.findAll(pageable);
+            catalogues = cataloguePage.getContent();
+        }
 
-        return cataloguePage.getContent()
-                .stream()
+        return catalogues.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
     @Override
+    @Transactional
     public CatalogueResponseDto createCatalogue(CatalogueRequestDto dto) {
         Catalogue catalogue = new Catalogue();
         catalogue.setCatalogueName(dto.getCatalogueName());
         catalogue.setCatalogueDescription(dto.getCatalogueDescription());
 
-        String currentUser = AuthUtils.getCurrentUsername(); // 🔑 Fetch user
+        String currentUser = AuthUtils.getCurrentUsername();
         catalogue.setCreatedBy(currentUser);
         catalogue.setUpdatedBy(currentUser);
 
         return convertToDto(catalogueRepository.save(catalogue));
     }
 
-
     @Override
+    @Transactional(readOnly = true)
     public CatalogueResponseDto getCatalogueById(Integer id) {
         Catalogue catalogue = catalogueRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Catalogue with id " + id + " not found"));
@@ -75,6 +96,7 @@ public class CatalogueServiceImplementation implements CatalogueService {
     }
 
     @Override
+    @Transactional
     public CatalogueResponseDto updateCatalogue(Integer id, CatalogueRequestDto dto) {
         Catalogue catalogue = catalogueRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Catalogue not found"));
@@ -87,6 +109,7 @@ public class CatalogueServiceImplementation implements CatalogueService {
     }
 
     @Override
+    @Transactional
     public void deleteCatalogue(Integer id) {
         Catalogue catalogue = catalogueRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Catalogue not found"));
@@ -106,21 +129,13 @@ public class CatalogueServiceImplementation implements CatalogueService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<CatalogueResponseDto> searchByName(String name) {
         return catalogueRepository.findByCatalogueNameContainingIgnoreCase(name)
                 .stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
-
-    // @Override
-    // public List<CatalogueResponseDto> searchByDescription(String description) {
-    // return
-    // catalogueRepository.findByCatalogueDescriptionContainingIgnoreCase(description)
-    // .stream()
-    // .map(this::convertToDto)
-    // .collect(Collectors.toList());
-    // }
 
     public List<CategoryResponseDto> getCategoriesByCatalogueId(Integer catalogueId) {
         // Find the catalogue

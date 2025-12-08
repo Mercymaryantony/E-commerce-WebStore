@@ -14,9 +14,8 @@ public interface CategoryRepository extends JpaRepository<Category, Integer> {
     boolean existsByCategoryName(String categoryName);
 
     @Query(value = "SELECT c.category_name FROM web_store.category c ORDER BY c.category_id ASC", nativeQuery = true)
-    List<String> findTop3CategoryNames(); // Fetch first 3 names
+    List<String> findTop3CategoryNames();
 
-    // Find category ID by name
     @Query("SELECT c.categoryId FROM Category c WHERE c.categoryName = :categoryName")
     Integer findCategoryIdByCategoryName(@Param("categoryName") String categoryName);
 
@@ -25,20 +24,16 @@ public interface CategoryRepository extends JpaRepository<Category, Integer> {
     @Query("SELECT c.categoryName FROM Category c")
     List<String> findAllCategoryNames();
 
-    // Search by category name (case-insensitive, partial match)
     @Query("SELECT c FROM Category c WHERE LOWER(c.categoryName) LIKE LOWER(CONCAT('%', :name, '%'))")
     List<Category> searchByCategoryName(@Param("name") String name);
 
-    // Search by Category Description (case-insensitive, partial match)
     @Query("SELECT c FROM Category c WHERE LOWER(c.categoryDescription) LIKE LOWER(CONCAT('%', :description, '%'))")
     List<Category> searchByCategoryDescription(@Param("description") String description);
 
-    // Search by both name and description
     @Query("SELECT c FROM Category c WHERE LOWER(c.categoryName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
            "OR LOWER(c.categoryDescription) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
     List<Category> searchByNameOrDescription(@Param("searchTerm") String searchTerm);
 
-    // Count products in a category
     @Query("SELECT COUNT(p) FROM Product p WHERE p.catalogueCategory.category.categoryId = :categoryId")
     Long countProductsByCategoryId(@Param("categoryId") Integer categoryId);
 
@@ -48,14 +43,18 @@ public interface CategoryRepository extends JpaRepository<Category, Integer> {
            "WHERE c.categoryId = :id")
     Optional<Category> findByIdWithRelations(@Param("id") Integer id);
 
-    // Use JOIN FETCH to eagerly load catalogueCategories and catalogues
-    // DISTINCT - to avoid duplicate Category entities
     @Query("SELECT DISTINCT c FROM Category c " +
            "LEFT JOIN FETCH c.catalogueCategories cc " +
            "LEFT JOIN FETCH cc.catalogue " +
            "ORDER BY c.categoryId")
     List<Category> findAllWithRelations();
 
-    // Search categories by name (case-insensitive, partial match)
     List<Category> findByCategoryNameContainingIgnoreCase(String name);
+
+    // Find categories that have products from a specific seller
+    @Query("SELECT DISTINCT c FROM Category c " +
+           "JOIN c.catalogueCategories cc " +
+           "JOIN cc.products p " +
+           "WHERE p.seller.sellerId = :sellerId")
+    List<Category> findBySellerId(@Param("sellerId") Integer sellerId);
 }
