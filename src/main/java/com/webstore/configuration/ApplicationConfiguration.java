@@ -1,5 +1,6 @@
 package com.webstore.configuration;
 
+import com.webstore.constant.UserRole;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -69,9 +70,22 @@ public class ApplicationConfiguration {
                     .csrf(csrf -> csrf.disable())
                     .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                     .authorizeHttpRequests(authorize -> authorize
+                            // Public endpoints - no authentication required
                             .requestMatchers("/api/auth/**").permitAll()
-                            .anyRequest().permitAll() // Allow all for backward compatibility, JWT filter will handle authorization
-                    )
+
+                            // Admin-only endpoints - using constant
+                            .requestMatchers("/api/admin/**").hasRole(UserRole.ADMIN)
+
+                            // Seller-only endpoints - using constant
+                            .requestMatchers("/api/seller/**").hasRole(UserRole.SELLER)
+
+                            // Endpoints accessible by both ADMIN and SELLER - using constants
+                            .requestMatchers("/api/products/**").hasAnyRole(UserRole.ADMIN, UserRole.SELLER)
+                            .requestMatchers("/api/catalogues/**").hasAnyRole(UserRole.ADMIN, UserRole.SELLER)
+                            .requestMatchers("/api/categories/**").hasAnyRole(UserRole.ADMIN, UserRole.SELLER)
+
+                            // All other requests require authentication (any role)
+                            .anyRequest().authenticated())
                     .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
             return http.build();
         }

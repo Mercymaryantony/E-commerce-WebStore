@@ -1,5 +1,6 @@
 package com.webstore.controller;
 
+import com.webstore.constant.UserRole;
 import com.webstore.dto.request.CatalogueRequestDto;
 import com.webstore.dto.response.CatalogueResponseDto;
 import com.webstore.service.CatalogueService;
@@ -31,7 +32,7 @@ public class CatalogueController {
     @PostMapping
     public ResponseEntity<CatalogueResponseDto> createCatalogue(@RequestBody @Valid CatalogueRequestDto dto) {
         String role = SecurityContextUtils.getCurrentRole();
-        if (role != null && "SELLER".equals(role)) {
+        if (role != null && UserRole.SELLER.equals(role)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sellers cannot create catalogues");
         }
         return ResponseEntity.ok(catalogueService.createCatalogue(dto));
@@ -57,9 +58,15 @@ public class CatalogueController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<CatalogueResponseDto>> searchCatalogues(@RequestParam String name) {
-        // Searching catalogues with keywords
+    public ResponseEntity<List<CatalogueResponseDto>> searchCatalogues(
+            @RequestParam(required = false) String name) { // ← Made optional
+        // If name is null or empty, return all catalogues
+        // Otherwise, search for matching catalogues
         List<CatalogueResponseDto> catalogues = catalogueService.searchByName(name);
+
+        if (catalogues.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
         return ResponseEntity.ok(catalogues);
     }
 
@@ -68,7 +75,7 @@ public class CatalogueController {
             @PathVariable Integer id,
             @RequestBody @Valid CatalogueRequestDto dto) {
         String role = SecurityContextUtils.getCurrentRole();
-        if (role != null && "SELLER".equals(role)) {
+        if (role != null && UserRole.SELLER.equals(role)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sellers cannot update catalogues");
         }
         return ResponseEntity.ok(catalogueService.updateCatalogue(id, dto));
@@ -77,7 +84,7 @@ public class CatalogueController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCatalogue(@PathVariable Integer id) {
         String role = SecurityContextUtils.getCurrentRole();
-        if (role != null && "SELLER".equals(role)) {
+        if (role != null && UserRole.SELLER.equals(role)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sellers cannot delete catalogues");
         }
         catalogueService.deleteCatalogue(id);
