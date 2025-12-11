@@ -9,6 +9,7 @@ import com.webstore.repository.CatalogueCategoryRepository;
 import com.webstore.repository.ProductRepository;
 import com.webstore.service.CategoryService;
 import com.webstore.util.AuthUtils;
+import com.webstore.util.SecurityContextUtils;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.EntityExistsException;
 import org.slf4j.Logger;
@@ -17,10 +18,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.util.StringUtils;
 import jakarta.persistence.EntityManager;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,10 +40,10 @@ public class CategoryServiceImplementation implements CategoryService {
     private final EntityManager entityManager;
 
     @Autowired
-    public CategoryServiceImplementation(CategoryRepository categoryRepository, 
-                                        CatalogueCategoryRepository catalogueCategoryRepository,
-                                        ProductRepository productRepository,
-                                        EntityManager entityManager) {
+    public CategoryServiceImplementation(CategoryRepository categoryRepository,
+            CatalogueCategoryRepository catalogueCategoryRepository,
+            ProductRepository productRepository,
+            EntityManager entityManager) {
         this.categoryRepository = categoryRepository;
         this.catalogueCategoryRepository = catalogueCategoryRepository;
         this.productRepository = productRepository;
@@ -67,16 +72,37 @@ public class CategoryServiceImplementation implements CategoryService {
     @Transactional(readOnly = true)
     public List<CategoryResponseDto> getAllCategories(int page, int size) {
         logger.info("=== getAllCategories: page={}, size={} ===", page, size);
-        
-        // Use regular findAll with Pageable to avoid ConcurrentModificationException
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Category> categoryPage = categoryRepository.findAll(pageable);
-        logger.info("✓ Loaded {} categories from database (page {}, total: {})", 
-                   categoryPage.getContent().size(), page, categoryPage.getTotalElements());
-        
-        List<Category> categories = categoryPage.getContent();
+
+        List<Category> categories;
+        String role = SecurityContextUtils.getCurrentRole();
+        if (role != null && "SELLER".equals(role)) {
+            Integer sellerId = SecurityContextUtils.getCurrentSellerId();
+            if (sellerId == null) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Seller ID not found in token");
+            }
+            // Get all categories that have products from this seller
+            List<Category> allSellerCategories = categoryRepository.findBySellerId(sellerId);
+            // Apply pagination manually
+            int start = page * size;
+            int end = Math.min(start + size, allSellerCategories.size());
+            if (start < allSellerCategories.size()) {
+                categories = allSellerCategories.subList(Math.max(0, start), end);
+            } else {
+                categories = new ArrayList<>();
+            }
+            logger.info("✓ Loaded {} categories for seller {} (page {}, total: {})",
+                    categories.size(), sellerId, page, allSellerCategories.size());
+        } else {
+            // Admin or unauthenticated - return all categories with pagination
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Category> categoryPage = categoryRepository.findAll(pageable);
+            categories = categoryPage.getContent();
+            logger.info("✓ Loaded {} categories from database (page {}, total: {})",
+                    categories.size(), page, categoryPage.getTotalElements());
+        }
+
         logger.info("Processing {} categories for page {}", categories.size(), page);
-        
+
         return categories.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -85,10 +111,12 @@ public class CategoryServiceImplementation implements CategoryService {
     @Override
     @Transactional(readOnly = true)
     public CategoryResponseDto getCategoryById(Integer id) {
-        // Use regular findById instead of findByIdWithRelations to avoid ConcurrentModificationException
-        // We don't need the eagerly loaded collections since we use native queries in mapToResponse
+        // Use regular findById instead of findByIdWithRelations to avoid
+        // ConcurrentModificationException
+        // We don't need the eagerly loaded collections since we use native queries in
+        // mapToResponse
         Category category = categoryRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Category not found with ID: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Category not found with ID: " + id));
         return mapToResponse(category);
     }
 
@@ -126,13 +154,14 @@ public class CategoryServiceImplementation implements CategoryService {
         // Verify category exists
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Category not found with ID: " + id));
-        
-        // Step 1: Delete all products for this category first (to avoid foreign key violations)
+
+        // Step 1: Delete all products for this category first (to avoid foreign key
+        // violations)
         // Products reference CatalogueCategory, so they must be deleted first
         logger.info("Deleting products for category ID: {}", id);
         productRepository.deleteByCategoryId(id);
         entityManager.flush(); // Ensure products are deleted before proceeding
-        
+
         // Step 2: Delete CatalogueCategory records for this category
         // This is handled by cascade, but we can also delete explicitly to avoid issues
         logger.info("Deleting CatalogueCategory records for category ID: {}", id);
@@ -141,7 +170,7 @@ public class CategoryServiceImplementation implements CategoryService {
             catalogueCategoryRepository.deleteAll(catalogueCategories);
             entityManager.flush(); // Ensure CatalogueCategory records are deleted
         }
-        
+
         // Step 3: Delete the category itself
         logger.info("Deleting category ID: {}", id);
         categoryRepository.delete(category);
@@ -150,8 +179,8 @@ public class CategoryServiceImplementation implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CategoryResponseDto> searchCategories(String searchTerm){
-        if (searchTerm == null || searchTerm.trim().isEmpty()){
+    public List<CategoryResponseDto> searchCategories(String searchTerm) {
+        if (!StringUtils.hasText(searchTerm)) {
             return getAllCategories(0, 100);
         }
 
@@ -161,9 +190,9 @@ public class CategoryServiceImplementation implements CategoryService {
 
     private CategoryResponseDto mapToResponse(Category category) {
         try {
-            logger.debug("mapToResponse: Starting for category id={}, name={}", 
-                        category.getCategoryId(), category.getCategoryName());
-            
+            logger.debug("mapToResponse: Starting for category id={}, name={}",
+                    category.getCategoryId(), category.getCategoryName());
+
             CategoryResponseDto dto = new CategoryResponseDto();
             dto.setCategoryId(category.getCategoryId());
             dto.setCategoryName(category.getCategoryName());
@@ -178,60 +207,82 @@ public class CategoryServiceImplementation implements CategoryService {
             // This is the most reliable way to get catalogue data
             Integer categoryId = category.getCategoryId();
             logger.info("Fetching catalogue information for categoryId: {}", categoryId);
-            
+
             // First, try native query to get catalogue info directly
             List<Object[]> catalogueData = catalogueCategoryRepository.findCatalogueInfoByCategoryIdNative(categoryId);
-            
+
             List<CategoryResponseDto.CatalogueInfoDto> catalogues = new java.util.ArrayList<>();
             Long productCount = 0L;
-            
+
             if (catalogueData != null && !catalogueData.isEmpty()) {
                 logger.info("Found {} catalogues via native query for category {}", catalogueData.size(), categoryId);
-                
+
                 // Extract catalogue information from native query results
                 for (Object[] row : catalogueData) {
                     try {
                         Integer catalogueId = (Integer) row[0];
                         String catalogueName = (String) row[1];
                         String catalogueDescription = (String) row[2];
-                        
+
                         CategoryResponseDto.CatalogueInfoDto catalogueInfo = new CategoryResponseDto.CatalogueInfoDto();
                         catalogueInfo.setCatalogueId(catalogueId);
                         catalogueInfo.setCatalogueName(catalogueName);
                         catalogueInfo.setCatalogueDescription(catalogueDescription);
                         catalogues.add(catalogueInfo);
-                        
-                        logger.info("✓ Added catalogue ID: {}, Name: {}", catalogueId, catalogueName);
+
+                        logger.info(" Added catalogue ID: {}, Name: {}", catalogueId, catalogueName);
                     } catch (Exception e) {
                         logger.error("Error processing catalogue data: {}", e.getMessage(), e);
                     }
                 }
-                
-                // Get product count using native query to avoid ConcurrentModificationException
-                // This avoids accessing entity collections which can cause concurrent modification issues
-                Long productCountLong = catalogueCategoryRepository.countProductsByCategoryId(categoryId);
-                productCount = productCountLong != null ? productCountLong : 0L;
+
+                // Get product count using native query - seller-specific if seller, otherwise
+                // all
+                String role = SecurityContextUtils.getCurrentRole();
+                if (role != null && "SELLER".equals(role)) {
+                    Integer sellerId = SecurityContextUtils.getCurrentSellerId();
+                    if (sellerId != null) {
+                        Long productCountLong = catalogueCategoryRepository
+                                .countProductsByCategoryIdAndSellerId(categoryId, sellerId);
+                        productCount = productCountLong != null ? productCountLong : 0L;
+                        logger.debug("Product count for seller {} in category {}: {}", sellerId, categoryId,
+                                productCount);
+                    }
+                } else {
+                    Long productCountLong = catalogueCategoryRepository.countProductsByCategoryId(categoryId);
+                    productCount = productCountLong != null ? productCountLong : 0L;
+                }
             } else {
                 logger.warn("⚠ No catalogues found for category {} via native query", categoryId);
                 // Still get product count even if no catalogues found
-                Long productCountLong = catalogueCategoryRepository.countProductsByCategoryId(categoryId);
-                productCount = productCountLong != null ? productCountLong : 0L;
+                String role = SecurityContextUtils.getCurrentRole();
+                if (role != null && "SELLER".equals(role)) {
+                    Integer sellerId = SecurityContextUtils.getCurrentSellerId();
+                    if (sellerId != null) {
+                        Long productCountLong = catalogueCategoryRepository
+                                .countProductsByCategoryIdAndSellerId(categoryId, sellerId);
+                        productCount = productCountLong != null ? productCountLong : 0L;
+                    }
+                } else {
+                    Long productCountLong = catalogueCategoryRepository.countProductsByCategoryId(categoryId);
+                    productCount = productCountLong != null ? productCountLong : 0L;
+                }
             }
-            
+
             dto.setProductCount(productCount);
             dto.setCatalogues(catalogues);
-            logger.info("Category {}: productCount={}, catalogues={}", 
-                       category.getCategoryId(), productCount, catalogues.size());
+            logger.info("Category {}: productCount={}, catalogues={}",
+                    category.getCategoryId(), productCount, catalogues.size());
 
-            logger.debug("✓ Successfully completed mapToResponse for category {}", category.getCategoryId());
+            logger.debug("Successfully completed mapToResponse for category {}", category.getCategoryId());
             return dto;
         } catch (Exception e) {
-            logger.error("=== FATAL ERROR in mapToResponse for category {} ===", 
-                        category != null ? category.getCategoryId() : "null");
+            logger.error("=== FATAL ERROR in mapToResponse for category {} ===",
+                    category != null ? category.getCategoryId() : "null");
             logger.error("Exception type: {}", e.getClass().getName());
             logger.error("Error message: {}", e.getMessage());
             logger.error("Full stack trace:", e);
-            
+
             // If anything fails, return a basic DTO with minimal info
             CategoryResponseDto dto = new CategoryResponseDto();
             if (category != null) {
@@ -240,10 +291,14 @@ public class CategoryServiceImplementation implements CategoryService {
                 dto.setCategoryDescription(category.getCategoryDescription());
                 dto.setProductCount(0L);
                 dto.setCatalogues(List.of());
-                if (category.getCreatedAt() != null) dto.setCreatedAt(category.getCreatedAt());
-                if (category.getCreatedBy() != null) dto.setCreatedBy(category.getCreatedBy());
-                if (category.getUpdatedAt() != null) dto.setUpdatedAt(category.getUpdatedAt());
-                if (category.getUpdatedBy() != null) dto.setUpdatedBy(category.getUpdatedBy());
+                if (category.getCreatedAt() != null)
+                    dto.setCreatedAt(category.getCreatedAt());
+                if (category.getCreatedBy() != null)
+                    dto.setCreatedBy(category.getCreatedBy());
+                if (category.getUpdatedAt() != null)
+                    dto.setUpdatedAt(category.getUpdatedAt());
+                if (category.getUpdatedBy() != null)
+                    dto.setUpdatedBy(category.getUpdatedBy());
             }
             return dto;
         }

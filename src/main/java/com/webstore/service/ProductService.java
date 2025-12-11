@@ -10,7 +10,7 @@ public interface ProductService {
 
     ProductResponseDto createProduct(ProductRequestDto dto);
 
-    List<ProductResponseDto> getAllProducts();
+    List<ProductResponseDto> getAllProducts(int page, int size);
 
     ProductResponseDto updateProduct(Integer id, ProductRequestDto dto);
 
@@ -18,6 +18,6 @@ public interface ProductService {
 
     void deleteProduct(Integer id);
 
-//    @Transactional
-//    void deleteProductById(Integer id);
+    // search functionality
+    List<ProductResponseDto> searchProducts(String searchTerm);
 }

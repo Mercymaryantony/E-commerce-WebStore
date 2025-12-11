@@ -8,12 +8,12 @@ import com.webstore.entity.ProductPrice;
 import com.webstore.repository.*;
 import com.webstore.service.ProductPriceService;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.util.List;
+import java.util.stream.Collectors;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Optional;
@@ -28,11 +28,26 @@ public class ProductPriceServiceImplementation implements ProductPriceService {
     private final CategoryRepository categoryRepository;
 
     @Autowired
-    public ProductPriceServiceImplementation(ProductPriceRepository productPriceRepository, ProductRepository productRepository, CurrencyRepository currencyRepository, CategoryRepository categoryRepository) {
+    public ProductPriceServiceImplementation(
+            ProductPriceRepository productPriceRepository,
+            ProductRepository productRepository,
+            CurrencyRepository currencyRepository,
+            CategoryRepository categoryRepository) {
         this.productPriceRepository = productPriceRepository;
         this.productRepository = productRepository;
         this.currencyRepository = currencyRepository;
         this.categoryRepository = categoryRepository;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductPriceResponseDto> getAllProductPrices() {
+        log.info("Fetching all product prices");
+    
+        return productPriceRepository.findAll()
+                .stream()
+                .map(this::mapToResponseDto)
+                .collect(Collectors.toList());
     }
 
     @Override

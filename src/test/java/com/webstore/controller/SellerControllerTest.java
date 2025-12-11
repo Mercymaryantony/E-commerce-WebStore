@@ -192,7 +192,7 @@ class SellerControllerTest {
 
         // Mock service to return list of 2 sellers
         List<SellerResponseDto> sellers = Arrays.asList(responseDto, responseDto2);
-        when(sellerService.getAllSellers()).thenReturn(sellers);
+        when(sellerService.getAllSellers(0,Integer.MAX_VALUE)).thenReturn(sellers);
 
         // ACT & ASSERT
         mockMvc.perform(get("/api/sellers")  // HTTP GET to /api/sellers
@@ -205,7 +205,7 @@ class SellerControllerTest {
                 .andExpect(jsonPath("$[1].name").value("Jane Smith"));  // Second seller name
 
         // VERIFY
-        verify(sellerService).getAllSellers();
+        verify(sellerService).getAllSellers(0,Integer.MAX_VALUE);
     }
 
     /**
@@ -222,7 +222,7 @@ class SellerControllerTest {
     @DisplayName("GET /api/sellers - Should return empty array with 200 when no sellers exist")
     void whenGetAllSellers_withNoSellers_thenReturnsEmptyArray() throws Exception {
         // ARRANGE
-        when(sellerService.getAllSellers()).thenReturn(List.of());
+        when(sellerService.getAllSellers(0,Integer.MAX_VALUE)).thenReturn(List.of());
 
         // ACT & ASSERT
         mockMvc.perform(get("/api/sellers")
@@ -231,7 +231,7 @@ class SellerControllerTest {
                 .andExpect(jsonPath("$", hasSize(0)));  // Empty array
 
         // VERIFY
-        verify(sellerService).getAllSellers();
+        verify(sellerService).getAllSellers(0,Integer.MAX_VALUE);
     }
 
     /**

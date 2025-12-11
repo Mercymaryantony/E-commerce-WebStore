@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import java.util.List;
 import java.math.BigInteger;
 
 @Slf4j
@@ -33,7 +33,12 @@ public class ProductPriceController {
         ProductPriceResponseDto response = productPriceService.createProductPrice(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
-
+    @GetMapping
+    public ResponseEntity<List<ProductPriceResponseDto>> getAllProductPrices() {
+        log.info("Fetching all product prices");
+        List<ProductPriceResponseDto> productPrices = productPriceService.getAllProductPrices();
+        return ResponseEntity.ok(productPrices);
+}
     @GetMapping("/{id}")
     public ResponseEntity<ProductPriceResponseDto> getProductPriceById(@PathVariable Integer id) {
         log.info("Fetching product price with id={}", id);

@@ -56,9 +56,9 @@ class ProductControllerTest {
 
     @Test
     void testGetAllProducts() {
-        when(productService.getAllProducts()).thenReturn(List.of(mockResponse));
+        when(productService.getAllProducts(0,Integer.MAX_VALUE)).thenReturn(List.of(mockResponse));
 
-        ResponseEntity<List<ProductResponseDto>> response = productController.getAllProducts();
+        ResponseEntity<List<ProductResponseDto>> response = productController.getAllProducts(0,Integer.MAX_VALUE);
 
         assertEquals(200, response.getStatusCodeValue());
         assertEquals(1, response.getBody().size());

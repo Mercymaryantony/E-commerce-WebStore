@@ -4,6 +4,7 @@ import com.webstore.repository.CategoryRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class CategoryBusinessService {
@@ -16,7 +17,10 @@ public class CategoryBusinessService {
 
     public List<String> getAllCategoryNames() {
         try {
-            return categoryRepository.findAllCategoryNames();
+            return categoryRepository.findAllCategoryNames()
+                    .stream()
+                    .map(CategoryRepository.CategoryNameProjection::getCategoryName)
+                    .collect(Collectors.toList());
         } catch (Exception e) {
             return categoryRepository.findTop3CategoryNames();
         }
@@ -31,7 +35,8 @@ public class CategoryBusinessService {
     }
 
     public Integer getCategoryIdByName(String categoryName) {
-        return categoryRepository.findCategoryIdByCategoryName(categoryName);
+        CategoryRepository.CategoryIdProjection projection = categoryRepository.findCategoryIdByCategoryName(categoryName);
+        return projection != null ? projection.getCategoryId() : null;
     }
 
     public boolean shouldUseButtonsForCategories() {

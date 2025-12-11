@@ -20,6 +20,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,6 +45,7 @@ import static org.mockito.Mockito.*;
  * 
  * Annotations Explained:
  * @ExtendWith(MockitoExtension.class) - Enables Mockito in JUnit 5
+ * 
  * @Mock - Creates a fake object (doesn't use real database)
  * @InjectMocks - Creates real object and injects mocks into it
  * @BeforeEach - Runs before each test method
@@ -52,15 +58,15 @@ class SellerServiceImplementationTest {
 
     /**
      * @Mock - Creates a FAKE repository
-     * We don't want to use a real database in unit tests
-     * Instead, we tell it what to return using when().thenReturn()
+     *       We don't want to use a real database in unit tests
+     *       Instead, we tell it what to return using when().thenReturn()
      */
     @Mock
     private SellerRepository sellerRepository;
 
     /**
      * @InjectMocks - Creates REAL service and injects mocked repository
-     * This is what we're actually testing
+     *              This is what we're actually testing
      */
     @InjectMocks
     private SellerServiceImplementation sellerService;
@@ -124,15 +130,15 @@ class SellerServiceImplementationTest {
         SellerResponseDto result = sellerService.createSeller(requestDto);
 
         // ASSERT - Verify the results
-        assertThat(result).isNotNull();  // Response should not be null
-        assertThat(result.getSellerId()).isEqualTo(1);  // ID should be 1
-        assertThat(result.getName()).isEqualTo("John Doe");  // Name should match
-        assertThat(result.getEmail()).isEqualTo("john@example.com");  // Email should match
-        assertThat(result.getStatus()).isEqualTo(SellerStatus.ACTIVE);  // Status should be ACTIVE
+        assertThat(result).isNotNull(); // Response should not be null
+        assertThat(result.getSellerId()).isEqualTo(1); // ID should be 1
+        assertThat(result.getName()).isEqualTo("John Doe"); // Name should match
+        assertThat(result.getEmail()).isEqualTo("john@example.com"); // Email should match
+        assertThat(result.getStatus()).isEqualTo(SellerStatus.ACTIVE); // Status should be ACTIVE
 
         // VERIFY - Ensure repository methods were called
-        verify(sellerRepository).existsByEmail(requestDto.getEmail());  // Was email checked?
-        verify(sellerRepository).save(any(Seller.class));  // Was seller saved?
+        verify(sellerRepository).existsByEmail(requestDto.getEmail()); // Was email checked?
+        verify(sellerRepository).save(any(Seller.class)); // Was seller saved?
     }
 
     /**
@@ -154,8 +160,8 @@ class SellerServiceImplementationTest {
         // ACT & ASSERT
         // Verify that calling createSeller throws the right exception
         assertThatThrownBy(() -> sellerService.createSeller(requestDto))
-                .isInstanceOf(ResponseStatusException.class)  // Should throw this exception
-                .hasMessageContaining("Email already exists");  // With this message
+                .isInstanceOf(ResponseStatusException.class) // Should throw this exception
+                .hasMessageContaining("Email already exists"); // With this message
 
         // VERIFY
         // Save should never be called because validation failed
@@ -182,18 +188,20 @@ class SellerServiceImplementationTest {
         seller2.setJoiningDate(LocalDate.of(2024, 2, 20));
 
         // Mock repository to return list of 2 sellers
-        when(sellerRepository.findAll()).thenReturn(Arrays.asList(seller, seller2));
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Seller> sellerPage = new PageImpl<>(Arrays.asList(seller, seller2));
+        when(sellerRepository.findAll(pageable)).thenReturn(sellerPage);
 
         // ACT
-        List<SellerResponseDto> result = sellerService.getAllSellers();
+        List<SellerResponseDto> result = sellerService.getAllSellers(0, 10);
 
         // ASSERT
-        assertThat(result).hasSize(2);  // Should have 2 sellers
-        assertThat(result.get(0).getName()).isEqualTo("John Doe");  // First seller name
-        assertThat(result.get(1).getName()).isEqualTo("Jane Smith");  // Second seller name
+        assertThat(result).hasSize(2); // Should have 2 sellers
+        assertThat(result.get(0).getName()).isEqualTo("John Doe"); // First seller name
+        assertThat(result.get(1).getName()).isEqualTo("Jane Smith"); // Second seller name
 
         // VERIFY
-        verify(sellerRepository).findAll();
+        verify(sellerRepository).findAll(pageable);
     }
 
     /**
@@ -295,7 +303,7 @@ class SellerServiceImplementationTest {
         // ARRANGE
         SellerRequestDto updateDto = new SellerRequestDto();
         updateDto.setName("John Doe");
-        updateDto.setEmail("jane@example.com");  // Email already used by another seller
+        updateDto.setEmail("jane@example.com"); // Email already used by another seller
         updateDto.setStatus(SellerStatus.ACTIVE);
         updateDto.setJoiningDate(LocalDate.of(2024, 1, 15));
 
@@ -427,4 +435,3 @@ class SellerServiceImplementationTest {
         verify(sellerRepository).countByStatus(SellerStatus.ACTIVE);
     }
 }
-

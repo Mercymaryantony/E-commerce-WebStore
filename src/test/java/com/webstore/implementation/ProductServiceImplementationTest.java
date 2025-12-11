@@ -14,6 +14,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -83,9 +87,11 @@ class ProductServiceImplementationTest {
 
     @Test
     void testGetAllProducts() {
-        when(productRepository.findAll()).thenReturn(List.of(mockProduct));
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Product> productPage = new PageImpl<>(List.of(mockProduct));
+        when(productRepository.findAll(pageable)).thenReturn(productPage);
 
-        List<ProductResponseDto> result = productService.getAllProducts();
+        List<ProductResponseDto> result = productService.getAllProducts(0, 10);
 
         assertEquals(1, result.size());
     }

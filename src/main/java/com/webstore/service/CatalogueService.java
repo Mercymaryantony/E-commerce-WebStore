@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface CatalogueService {
     CatalogueResponseDto createCatalogue(CatalogueRequestDto dto);
-    List<CatalogueResponseDto> getAllCatalogues();
+    List<CatalogueResponseDto> getAllCatalogues(int page, int size);
     CatalogueResponseDto getCatalogueById(Integer id);
     CatalogueResponseDto updateCatalogue(Integer id, CatalogueRequestDto dto);
     void deleteCatalogue(Integer id);
