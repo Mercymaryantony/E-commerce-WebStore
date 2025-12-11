@@ -20,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -127,7 +128,7 @@ public class CatalogueServiceImplementation implements CatalogueService {
     @Transactional(readOnly = true)
     public List<CatalogueResponseDto> searchByName(String name) {
         // If search term is null or empty, return all catalogues
-        if (name == null || name.trim().isEmpty()) {
+        if (StringUtils.isEmpty(name)) {
             return getAllCatalogues(0, Integer.MAX_VALUE);
         }
 

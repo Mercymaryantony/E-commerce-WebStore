@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.util.StringUtils;
 
 import jakarta.validation.Valid;
 import java.util.List;
@@ -52,7 +53,7 @@ public class CategoryController {
     public ResponseEntity<List<CategoryResponseDto>> searchCategories(
             @RequestParam(required = false) String searchTerm) {
         List<CategoryResponseDto> categories;
-        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+        if (!StringUtils.hasText(searchTerm)) {
             categories = categoryService.getAllCategories(0, 100);
         } else {
             categories = categoryService.searchCategories(searchTerm);
