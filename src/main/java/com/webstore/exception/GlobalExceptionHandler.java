@@ -31,8 +31,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<String> handleResponseStatusException(ResponseStatusException ex) {
         LOGGER.error("Webstore: ResponseStatusException occurred: {}", ex.getMessage(), ex);
+        String reason = ex.getReason() != null ? ex.getReason() : ex.getStatusCode().toString();
         return ResponseEntity.status(ex.getStatusCode())
-                .body("Webstore: " + ex.getReason());
+                .body("Webstore: " + reason);
     }
 
     // ✅ Custom WhatsApp flow-related exceptions

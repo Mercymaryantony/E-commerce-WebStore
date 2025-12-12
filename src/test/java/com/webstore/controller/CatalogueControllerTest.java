@@ -96,6 +96,17 @@ class CatalogueControllerTest {
         verify(catalogueService, times(1)).searchByName("Electronics");
     }
 
+    // Note: getCatalogueById method is not implemented in CatalogueController
+    // This test is commented out as the method doesn't exist in the controller
+    // @Test
+    // void testGetCatalogueById() {
+    //     when(catalogueService.getCatalogueById(1)).thenReturn(responseDto);
+    //     ResponseEntity<CatalogueResponseDto> response = catalogueController.getCatalogueById(1);
+    //
+    //     assertEquals(HttpStatus.OK.value(), response.getStatusCode().value());
+    //     assertEquals(responseDto, response.getBody());
+    // }
+
     @Test
     void testUpdateCatalogue() {
         when(catalogueService.updateCatalogue(1, requestDto)).thenReturn(responseDto);

@@ -98,4 +98,20 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
                      "LEFT JOIN FETCH cc.category cat " +
                      "WHERE p.seller.sellerId = :sellerId")
        List<Product> findBySellerIdWithRelations(@Param("sellerId") Integer sellerId);
+
+       // Find products with pagination, filtered by seller ID
+       @Query("SELECT DISTINCT p FROM Product p " +
+                     "LEFT JOIN FETCH p.seller s " +
+                     "WHERE p.seller.sellerId = :sellerId " +
+                     "ORDER BY p.productId")
+       List<Product> findAllBySellerId(@Param("sellerId") Integer sellerId);
+
+       // Search products by name or description, filtered by seller ID
+       @Query("SELECT DISTINCT p FROM Product p " +
+                     "LEFT JOIN FETCH p.seller s " +
+                     "WHERE p.seller.sellerId = :sellerId " +
+                     "AND (LOWER(p.productName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
+                     "OR LOWER(p.productDescription) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
+       List<Product> searchBySellerIdAndNameOrDescription(@Param("sellerId") Integer sellerId,
+                     @Param("searchTerm") String searchTerm);
 }

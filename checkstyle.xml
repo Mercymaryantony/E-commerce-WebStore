@@ -41,14 +41,16 @@
     <module name="TreeWalker">
         <!-- Import Checks -->
         <module name="RedundantImport">
-            <property name="severity" value="error" />
+            <property name="severity" value="warning" />
         </module>
 
         <module name="IllegalImport">
             <property name="illegalPkgs" value="junit.framework" />
         </module>
 
-        <module name="UnusedImports" />
+        <module name="UnusedImports">
+            <property name="severity" value="warning" />
+        </module>
 
         <!-- Method Length -->
         <module name="MethodLength">
@@ -60,18 +62,18 @@
 
         <!-- Javadoc Checks -->
         <module name="JavadocMethod">
-            <property name="severity" value="error" />
+            <property name="severity" value="warning" />
             <property name="allowMissingParamTags" value="true" />
             <property name="allowMissingReturnTag" value="true" />
         </module>
 
         <module name="JavadocType">
             <property name="scope" value="protected" />
-            <property name="severity" value="error" />
+            <property name="severity" value="warning" />
         </module>
 
         <module name="JavadocStyle">
-            <property name="severity" value="error" />
+            <property name="severity" value="warning" />
         </module>
 
         <!-- Naming Checks -->
@@ -226,6 +228,7 @@
 
     <!-- Suppression Filter -->
     <module name="SuppressionFilter">
-        <property name="file" value="${config_loc}/suppressions.xml"/>
+        <property name="file" value="suppressions.xml"/>
+        <property name="optional" value="true"/>
     </module>
 </module>

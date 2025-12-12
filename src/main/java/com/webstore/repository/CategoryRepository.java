@@ -11,51 +11,59 @@ import java.util.Optional;
 
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Integer> {
-    boolean existsByCategoryName(String categoryName);
 
-    @Query(value = "SELECT c.category_name FROM web_store.category c ORDER BY c.category_id ASC", nativeQuery = true)
-    List<String> findTop3CategoryNames(); // Fetch first 3 names
+       
+       boolean existsByCategoryName(String categoryName);
 
-    // Find category ID by name
-    @Query("SELECT c.categoryId FROM Category c WHERE c.categoryName = :categoryName")
-    Integer findCategoryIdByCategoryName(@Param("categoryName") String categoryName);
+       Optional<Category> findByCategoryName(String categoryName);
 
-    Optional<Category> findByCategoryName(String categoryName);
+       List<Category> findByCategoryNameContainingIgnoreCase(String name);
 
-    @Query("SELECT c.categoryName FROM Category c")
-    List<String> findAllCategoryNames();
+       List<Category> findByCategoryDescriptionContainingIgnoreCase(String description);
 
-    // Search by category name (case-insensitive, partial match)
-    @Query("SELECT c FROM Category c WHERE LOWER(c.categoryName) LIKE LOWER(CONCAT('%', :name, '%'))")
-    List<Category> searchByCategoryName(@Param("name") String name);
+       // Projection for getting only category names
+       interface CategoryNameProjection {
+              String getCategoryName();
+       }
 
-    // Search by Category Description (case-insensitive, partial match)
-    @Query("SELECT c FROM Category c WHERE LOWER(c.categoryDescription) LIKE LOWER(CONCAT('%', :description, '%'))")
-    List<Category> searchByCategoryDescription(@Param("description") String description);
+       @Query("SELECT c.categoryName FROM Category c")
+       List<CategoryNameProjection> findAllCategoryNames();
 
-    // Search by both name and description
-    @Query("SELECT c FROM Category c WHERE LOWER(c.categoryName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
-           "OR LOWER(c.categoryDescription) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
-    List<Category> searchByNameOrDescription(@Param("searchTerm") String searchTerm);
+       // Projection for getting only category ID by name
+       interface CategoryIdProjection {
+              Integer getCategoryId();
+       }
 
-    // Count products in a category
-    @Query("SELECT COUNT(p) FROM Product p WHERE p.catalogueCategory.category.categoryId = :categoryId")
-    Long countProductsByCategoryId(@Param("categoryId") Integer categoryId);
+       @Query("SELECT c.categoryId FROM Category c WHERE c.categoryName = :categoryName")
+       CategoryIdProjection findCategoryIdByCategoryName(@Param("categoryName") String categoryName);
 
-    @Query("SELECT DISTINCT c FROM Category c " +
-           "LEFT JOIN FETCH c.catalogueCategories cc " +
-           "LEFT JOIN FETCH cc.catalogue " +
-           "WHERE c.categoryId = :id")
-    Optional<Category> findByIdWithRelations(@Param("id") Integer id);
+       // Complex queries that need @Query
+       @Query(value = "SELECT c.category_name FROM web_store.category c ORDER BY c.category_id ASC LIMIT 3", nativeQuery = true)
+       List<String> findTop3CategoryNames();
 
-    // Use JOIN FETCH to eagerly load catalogueCategories and catalogues
-    // DISTINCT - to avoid duplicate Category entities
-    @Query("SELECT DISTINCT c FROM Category c " +
-           "LEFT JOIN FETCH c.catalogueCategories cc " +
-           "LEFT JOIN FETCH cc.catalogue " +
-           "ORDER BY c.categoryId")
-    List<Category> findAllWithRelations();
+       @Query("SELECT c FROM Category c WHERE LOWER(c.categoryName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
+                     "OR LOWER(c.categoryDescription) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
+       List<Category> searchByNameOrDescription(@Param("searchTerm") String searchTerm);
 
-    // Search categories by name (case-insensitive, partial match)
-    List<Category> findByCategoryNameContainingIgnoreCase(String name);
+       @Query("SELECT COUNT(p) FROM Product p WHERE p.catalogueCategory.category.categoryId = :categoryId")
+       Long countProductsByCategoryId(@Param("categoryId") Integer categoryId);
+
+       // Complex queries with joins
+       @Query("SELECT DISTINCT c FROM Category c " +
+                     "LEFT JOIN FETCH c.catalogueCategories cc " +
+                     "LEFT JOIN FETCH cc.catalogue " +
+                     "WHERE c.categoryId = :id")
+       Optional<Category> findByIdWithRelations(@Param("id") Integer id);
+
+       @Query("SELECT DISTINCT c FROM Category c " +
+                     "LEFT JOIN FETCH c.catalogueCategories cc " +
+                     "LEFT JOIN FETCH cc.catalogue " +
+                     "ORDER BY c.categoryId")
+       List<Category> findAllWithRelations();
+
+       @Query("SELECT DISTINCT c FROM Category c " +
+                     "JOIN c.catalogueCategories cc " +
+                     "JOIN cc.products p " +
+                     "WHERE p.seller.sellerId = :sellerId")
+       List<Category> findBySellerId(@Param("sellerId") Integer sellerId);
 }

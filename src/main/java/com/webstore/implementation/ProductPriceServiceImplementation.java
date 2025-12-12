@@ -28,7 +28,11 @@ public class ProductPriceServiceImplementation implements ProductPriceService {
     private final CategoryRepository categoryRepository;
 
     @Autowired
-    public ProductPriceServiceImplementation(ProductPriceRepository productPriceRepository, ProductRepository productRepository, CurrencyRepository currencyRepository, CategoryRepository categoryRepository) {
+    public ProductPriceServiceImplementation(
+            ProductPriceRepository productPriceRepository,
+            ProductRepository productRepository,
+            CurrencyRepository currencyRepository,
+            CategoryRepository categoryRepository) {
         this.productPriceRepository = productPriceRepository;
         this.productRepository = productRepository;
         this.currencyRepository = currencyRepository;

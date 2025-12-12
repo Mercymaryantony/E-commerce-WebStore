@@ -12,6 +12,7 @@ import com.webstore.repository.ProductPriceRepository;
 import com.webstore.repository.ProductRepository;
 import com.webstore.repository.SellerRepository;
 import com.webstore.service.ProductService;
+import com.webstore.util.SecurityContextUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -40,6 +41,19 @@ public class ProductServiceImplementation implements ProductService {
     @Transactional
     public ProductResponseDto createProduct(ProductRequestDto dto) {
         log.info("Creating product with name: {}", dto.getProductName());
+
+        // If seller, ensure they can only create products for themselves
+        String role = SecurityContextUtils.getCurrentRole();
+        if (role != null && "SELLER".equals(role)) {
+            Integer sellerId = SecurityContextUtils.getCurrentSellerId();
+            if (sellerId == null) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Seller ID not found in token");
+            }
+            // Override sellerId from DTO to ensure seller can only create for themselves
+            dto.setSellerId(sellerId);
+            log.info("Seller {} is creating product, sellerId set to {}",
+                    SecurityContextUtils.getCurrentSellerEmail().orElse("unknown"), sellerId);
+        }
 
         // Validate and find CatalogueCategory
         CatalogueCategory catalogueCategory = catalogueCategoryRepository
@@ -76,11 +90,35 @@ public class ProductServiceImplementation implements ProductService {
     public List<ProductResponseDto> getAllProducts(int page, int size) {
         log.info("Fetching products - page: {}, size: {}", page, size);
 
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Product> productPage = productRepository.findAll(pageable);
+        List<Product> products;
+        String role = SecurityContextUtils.getCurrentRole();
+        if (role != null && "SELLER".equals(role)) {
+            Integer sellerId = SecurityContextUtils.getCurrentSellerId();
+            if (sellerId == null) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Seller ID not found in token");
+            }
+            // Get all products for this seller
+            List<Product> allSellerProducts = productRepository.findAllBySellerId(sellerId);
+            // Apply pagination manually
+            int start = page * size;
+            int end = Math.min(start + size, allSellerProducts.size());
+            if (start < allSellerProducts.size()) {
+                products = allSellerProducts.subList(Math.max(0, start), end);
+            } else {
+                products = new ArrayList<>();
+            }
+            log.info("Loaded {} products for seller {} (page {}, total: {})",
+                    products.size(), sellerId, page, allSellerProducts.size());
+        } else {
+            // Admin or unauthenticated - return all products with pagination
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Product> productPage = productRepository.findAll(pageable);
+            products = productPage.getContent();
+            log.info("Loaded {} products for admin/unauthenticated (page {}, total: {})",
+                    products.size(), page, productPage.getTotalElements());
+        }
 
-        return productPage.getContent()
-                .stream()
+        return products.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
@@ -94,6 +132,20 @@ public class ProductServiceImplementation implements ProductService {
                 .orElseThrow(
                         () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found with ID: " + id));
 
+        // Check if seller is trying to access another seller's product
+        String role = SecurityContextUtils.getCurrentRole();
+        if (role != null && "SELLER".equals(role)) {
+            Integer sellerId = SecurityContextUtils.getCurrentSellerId();
+            if (sellerId == null) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Seller ID not found in token");
+            }
+            if (!sellerId.equals(product.getSeller().getSellerId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "Access denied: Product does not belong to your seller account");
+            }
+            log.info("Seller {} accessed their product {}", sellerId, id);
+        }
+
         return convertToDto(product);
     }
 
@@ -105,6 +157,22 @@ public class ProductServiceImplementation implements ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(
                         () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found with ID: " + id));
+
+        // Check if seller is trying to update another seller's product
+        String role = SecurityContextUtils.getCurrentRole();
+        if (role != null && "SELLER".equals(role)) {
+            Integer sellerId = SecurityContextUtils.getCurrentSellerId();
+            if (sellerId == null) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Seller ID not found in token");
+            }
+            if (!sellerId.equals(product.getSeller().getSellerId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "Access denied: Product does not belong to your seller account");
+            }
+            // Override sellerId to ensure seller can only update their own products
+            dto.setSellerId(sellerId);
+            log.info("Seller {} is updating their product {}", sellerId, id);
+        }
 
         // Validate and find CatalogueCategory
         CatalogueCategory catalogueCategory = catalogueCategoryRepository
@@ -143,6 +211,20 @@ public class ProductServiceImplementation implements ProductService {
                 .orElseThrow(
                         () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found with ID: " + id));
 
+        // Check if seller is trying to delete another seller's product
+        String role = SecurityContextUtils.getCurrentRole();
+        if (role != null && "SELLER".equals(role)) {
+            Integer sellerId = SecurityContextUtils.getCurrentSellerId();
+            if (sellerId == null) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Seller ID not found in token");
+            }
+            if (!sellerId.equals(product.getSeller().getSellerId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "Access denied: Product does not belong to your seller account");
+            }
+            log.info("Seller {} is deleting their product {}", sellerId, id);
+        }
+
         productRepository.delete(product);
         log.info("Product with ID: {} has been deleted", id);
     }
@@ -153,10 +235,23 @@ public class ProductServiceImplementation implements ProductService {
         log.info("Searching products with term: {}", searchTerm);
 
         if (searchTerm == null || searchTerm.trim().isEmpty()) {
-            return getAllProducts(0,Integer.MAX_VALUE);
+            return getAllProducts(0, Integer.MAX_VALUE);
         }
 
-        List<Product> products = productRepository.searchByNameOrDescription(searchTerm.trim());
+        List<Product> products;
+        String role = SecurityContextUtils.getCurrentRole();
+        if (role != null && "SELLER".equals(role)) {
+            Integer sellerId = SecurityContextUtils.getCurrentSellerId();
+            if (sellerId == null) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Seller ID not found in token");
+            }
+            products = productRepository.searchBySellerIdAndNameOrDescription(sellerId, searchTerm.trim());
+            log.info("Found {} products for seller {} matching '{}'", products.size(), sellerId, searchTerm);
+        } else {
+            products = productRepository.searchByNameOrDescription(searchTerm.trim());
+            log.info("Found {} products matching '{}' (admin/unauthenticated)", products.size(), searchTerm);
+        }
+
         return products.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
