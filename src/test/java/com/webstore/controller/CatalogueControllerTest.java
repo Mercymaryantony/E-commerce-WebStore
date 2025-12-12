@@ -5,7 +5,6 @@ import com.webstore.dto.response.CatalogueResponseDto;
 import com.webstore.service.CatalogueService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
@@ -22,7 +21,6 @@ class CatalogueControllerTest {
     @Mock
     private CatalogueService catalogueService;
 
-    @InjectMocks
     private CatalogueController catalogueController;
 
     private CatalogueRequestDto requestDto;
@@ -31,6 +29,10 @@ class CatalogueControllerTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+
+        // Create controller and manually inject the mock service
+        catalogueController = new CatalogueController();
+        catalogueController.setCatalogueService(catalogueService);
 
         requestDto = new CatalogueRequestDto();
         requestDto.setCatalogueName("Electronics");
@@ -49,6 +51,7 @@ class CatalogueControllerTest {
 
         assertEquals(HttpStatus.OK.value(), response.getStatusCode().value());
         assertEquals(responseDto, response.getBody());
+        verify(catalogueService, times(1)).createCatalogue(requestDto);
     }
 
     @Test
@@ -57,7 +60,40 @@ class CatalogueControllerTest {
         ResponseEntity<List<CatalogueResponseDto>> response = catalogueController.getAllCatalogues(null, null);
 
         assertEquals(HttpStatus.OK.value(), response.getStatusCode().value());
+        assertNotNull(response.getBody());
         assertEquals(1, response.getBody().size());
+        verify(catalogueService, times(1)).getAllCatalogues(0, Integer.MAX_VALUE);
+    }
+
+    @Test
+    void testGetAllCataloguesWithPagination() {
+        when(catalogueService.getAllCatalogues(0, 10)).thenReturn(Arrays.asList(responseDto));
+        ResponseEntity<List<CatalogueResponseDto>> response = catalogueController.getAllCatalogues(0, 10);
+
+        assertEquals(HttpStatus.OK.value(), response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertEquals(1, response.getBody().size());
+        verify(catalogueService, times(1)).getAllCatalogues(0, 10);
+    }
+
+    @Test
+    void testGetAllCataloguesEmpty() {
+        when(catalogueService.getAllCatalogues(0, Integer.MAX_VALUE)).thenReturn(Arrays.asList());
+        ResponseEntity<List<CatalogueResponseDto>> response = catalogueController.getAllCatalogues(null, null);
+
+        assertEquals(HttpStatus.NO_CONTENT.value(), response.getStatusCode().value());
+        verify(catalogueService, times(1)).getAllCatalogues(0, Integer.MAX_VALUE);
+    }
+
+    @Test
+    void testSearchCatalogues() {
+        when(catalogueService.searchByName("Electronics")).thenReturn(Arrays.asList(responseDto));
+        ResponseEntity<List<CatalogueResponseDto>> response = catalogueController.searchCatalogues("Electronics");
+
+        assertEquals(HttpStatus.OK.value(), response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertEquals(1, response.getBody().size());
+        verify(catalogueService, times(1)).searchByName("Electronics");
     }
 
     // Note: getCatalogueById method is not implemented in CatalogueController
@@ -78,6 +114,7 @@ class CatalogueControllerTest {
 
         assertEquals(HttpStatus.OK.value(), response.getStatusCode().value());
         assertEquals(responseDto, response.getBody());
+        verify(catalogueService, times(1)).updateCatalogue(1, requestDto);
     }
 
     @Test
@@ -88,5 +125,4 @@ class CatalogueControllerTest {
         assertEquals(HttpStatus.NO_CONTENT.value(), response.getStatusCode().value());
         verify(catalogueService, times(1)).deleteCatalogue(1);
     }
-
 }
