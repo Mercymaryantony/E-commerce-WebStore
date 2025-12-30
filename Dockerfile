@@ -9,12 +9,26 @@ COPY gradle ./gradle
 # Copy source code
 COPY src ./src
 
-# Fix build.gradle PMD configuration issue before building
+# Fix build.gradle issues before building
 RUN sed -i 's/maxHeapSize = "4g"/\/\/ maxHeapSize = "4g"  # Commented out for Docker build compatibility/' build.gradle || true
+# Comment out the custom buildDir line - using a more flexible pattern
+RUN sed -i 's|^buildDir = file.*|// buildDir override commented out for Docker build|' build.gradle || true
+
+# Create gradle.properties to override buildDir
+RUN echo "org.gradle.project.buildDir=build" > gradle.properties
 
 # Build the application (skip tests, checkstyle, and PMD for faster build)
-# Override buildDir using Gradle property to use default location
-RUN gradle clean build -x test -x checkstyleMain -x checkstyleTest -x pmdMain -x pmdTest --no-daemon -Dorg.gradle.project.buildDir=build
+# Checkstyle and PMD are already run in CI pipeline separately
+RUN gradle clean build -x test -x checkstyleMain -x checkstyleTest -x pmdMain -x pmdTest --no-daemon
+
+# Verify JAR exists and copy to expected location if needed
+RUN if [ ! -f build/libs/*.jar ]; then \
+        JAR_FILE=$(find ~/.gradle-builds -name "*.jar" -type f 2>/dev/null | head -1); \
+        if [ -n "$JAR_FILE" ]; then \
+            mkdir -p build/libs && \
+            cp "$JAR_FILE" build/libs/; \
+        fi; \
+    fi
 
 # Stage 2: Create runtime image
 FROM eclipse-temurin:21-jre-alpine
