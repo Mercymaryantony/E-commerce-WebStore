@@ -1,5 +1,5 @@
 # Stage 1: Build the application
-FROM gradle:7.6-jdk17 AS build
+FROM gradle:8.5-jdk21 AS build
 WORKDIR /app
 
 # Copy Gradle files
@@ -9,12 +9,15 @@ COPY gradle ./gradle
 # Copy source code
 COPY src ./src
 
+# Fix build.gradle PMD configuration issue before building
+RUN sed -i 's/maxHeapSize = "4g"/\/\/ maxHeapSize = "4g"  # Commented out for Docker build compatibility/' build.gradle || true
+
 # Build the application (skip tests, checkstyle, and PMD for faster build)
 # Checkstyle and PMD are already run in CI pipeline separately
 RUN gradle clean build -x test -x checkstyleMain -x checkstyleTest -x pmdMain -x pmdTest --no-daemon
 
 # Stage 2: Create runtime image
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # Create a non-root user
