@@ -9,12 +9,14 @@ COPY gradle ./gradle
 # Copy source code
 COPY src ./src
 
-# Fix build.gradle PMD configuration issue before building
+# Fix build.gradle issues before building
 RUN sed -i 's/maxHeapSize = "4g"/\/\/ maxHeapSize = "4g"  # Commented out for Docker build compatibility/' build.gradle || true
+RUN sed -i 's|buildDir = file("${System.getProperty("user.home")}/.gradle-builds/${project.name}/build")|// buildDir = file("${System.getProperty("user.home")}/.gradle-builds/${project.name}/build")  # Commented out for Docker build|' build.gradle || true
 
 # Build the application (skip tests, checkstyle, and PMD for faster build)
 # Checkstyle and PMD are already run in CI pipeline separately
-RUN gradle clean build -x test -x checkstyleMain -x checkstyleTest -x pmdMain -x pmdTest --no-daemon
+# Override buildDir to use default location in Docker
+RUN gradle clean build -x test -x checkstyleMain -x checkstyleTest -x pmdMain -x pmdTest --no-daemon -PbuildDir=build
 
 # Stage 2: Create runtime image
 FROM eclipse-temurin:21-jre-alpine
