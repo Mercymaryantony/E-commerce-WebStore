@@ -7,29 +7,15 @@ stages:
   - deploy_prod
 
 variables:
-  JAVA_VERSION: "17"
+  JAVA_VERSION: "21"
   GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   POSTGRES_DB: "web_store"
   POSTGRES_USER: "postgres"
   POSTGRES_PASSWORD: "postgres"
   POSTGRES_HOST_AUTH_METHOD: "trust"
   GIT_DEPTH: "0"
-  
-  # Docker image variables
   DOCKER_IMAGE_NAME: "webstore"
   DOCKER_IMAGE_TAG: "${CI_COMMIT_SHORT_SHA}"
-  
-  # Production Database Variables (Set these in GitLab CI/CD Variables from Terraform outputs)
-  # These should be set from your Terraform pipeline outputs:
-  # - PROD_DB_URL (from terraform output connection_string)
-  # - PROD_DB_USERNAME (from terraform output database_user)
-  # - PROD_DB_PASSWORD (from terraform output database_user_password)
-  # - PROD_JWT_SECRET (your production JWT secret)
-  # - PROD_GOOGLE_CLIENT_ID (your production Google OAuth client ID)
-  
-  # GitHub repository variables (set these in GitLab CI/CD Variables)
-  # GITHUB_REPO_URL: "https://github.com/your-username/your-repo.git"
-  # GITHUB_BRANCH: "docker"  # or "main" if merged
 
 cache:
   key: ${CI_COMMIT_REF_SLUG}
@@ -43,7 +29,7 @@ cache:
 
 checkstyle:
   stage: quality_check
-  image: gradle:7.6-jdk17
+  image: gradle:8.5-jdk21
   before_script:
     - echo "=== Cloning from GitHub ==="
     - echo "GitHub Repo:" ${GITHUB_REPO_URL}
@@ -54,25 +40,13 @@ checkstyle:
     - sh -c "mv temp_repo/* temp_repo/.* . 2>/dev/null || true"
     - rm -rf temp_repo
     - echo "=== Repository cloned ==="
-    - ls -la
   script:
-    - echo "Running Checkstyle analysis..."
     - gradle checkstyleMain checkstyleTest --no-daemon || true
-    - echo "Checkstyle analysis completed"
-  artifacts:
-    when: always
-    reports:
-      codequality:
-        - build/reports/checkstyle/main.xml
-        - build/reports/checkstyle/test.xml
-    paths:
-      - build/reports/checkstyle/
-    expire_in: 1 week
   allow_failure: true
 
 pmd:
   stage: quality_check
-  image: gradle:7.6-jdk17
+  image: gradle:8.5-jdk21
   before_script:
     - echo "=== Cloning from GitHub ==="
     - echo "GitHub Repo:" ${GITHUB_REPO_URL}
@@ -83,25 +57,13 @@ pmd:
     - sh -c "mv temp_repo/* temp_repo/.* . 2>/dev/null || true"
     - rm -rf temp_repo
     - echo "=== Repository cloned ==="
-    - ls -la
   script:
-    - echo "Running PMD analysis..."
     - gradle pmdMain pmdTest --no-daemon || true
-    - echo "PMD analysis completed"
-  artifacts:
-    when: always
-    reports:
-      codequality:
-        - build/reports/pmd/main.xml
-        - build/reports/pmd/test.xml
-    paths:
-      - build/reports/pmd/
-    expire_in: 1 week
   allow_failure: true
 
 unit_test:
   stage: quality_check
-  image: gradle:7.6-jdk17
+  image: gradle:8.5-jdk21
   services:
     - name: postgres:15
       alias: postgres
@@ -121,32 +83,19 @@ unit_test:
     - sh -c "mv temp_repo/* temp_repo/.* . 2>/dev/null || true"
     - rm -rf temp_repo
     - echo "=== Repository cloned ==="
+    - echo "=== Fixing build.gradle PMD configuration ==="
+    - |
+      if grep -q 'maxHeapSize = "4g"' build.gradle; then
+        sed -i 's/maxHeapSize = "4g"/\/\/ maxHeapSize = "4g"  # Commented out for CI compatibility/' build.gradle
+        echo "Fixed build.gradle PMD configuration"
+      fi
     - echo "Waiting for PostgreSQL to be ready..."
     - for i in {1..30}; do if pg_isready -h postgres -p 5432 -U postgres > /dev/null 2>&1; then echo "PostgreSQL is ready!"; break; fi; echo "Waiting for postgres... ($i/30)"; sleep 2; done
     - echo "Database connection details:"
     - echo "DB_URL:" ${DB_URL}
     - echo "DB_USERNAME:" ${DB_USERNAME}
-    - echo "Testing database connection..."
-    - PGPASSWORD=${POSTGRES_PASSWORD} psql -h postgres -U ${POSTGRES_USER} -d ${POSTGRES_DB} -c "SELECT version();" || echo "Database connection test failed"
   script:
-    - echo "Running unit tests..."
-    - gradle test --no-daemon --stacktrace --info 2>&1 | tee test-output.log || true
-    - echo "Test execution completed"
-    - echo "Checking for test results..."
-    - ls -la build/test-results/test/ || echo "No test results directory found"
-    - ls -la build/reports/tests/test/ || echo "No test reports directory found"
-    - echo "Build directory contents:"
-    - ls -la build/ || echo "No build directory found"
-  artifacts:
-    when: always
-    reports:
-      junit:
-        - build/test-results/test/**/TEST-*.xml
-    paths:
-      - build/reports/tests/test/
-      - build/test-results/test/
-      - test-output.log
-    expire_in: 1 week
+    - gradle test --no-daemon -x pmdMain -x pmdTest
   allow_failure: false
 
 # ============================================
@@ -155,7 +104,7 @@ unit_test:
 
 build:
   stage: build_compile
-  image: gradle:7.6-jdk17
+  image: gradle:8.5-jdk21
   before_script:
     - echo "=== Cloning from GitHub ==="
     - echo "GitHub Repo:" ${GITHUB_REPO_URL}
@@ -166,24 +115,11 @@ build:
     - sh -c "mv temp_repo/* temp_repo/.* . 2>/dev/null || true"
     - rm -rf temp_repo
     - echo "=== Repository cloned ==="
-    - echo "Preparing build environment..."
-    - pwd
-    - echo "Checking for Gradle files..."
-    - ls -la build.gradle settings.gradle || echo "Files not found in current directory"
   script:
-    - echo "Running build..."
-    - gradle clean build -x test --no-daemon --stacktrace --info 2>&1 | tee build-output.log || true
-    - echo "Build execution completed"
-    - echo "Checking build output..."
-    - ls -la build/libs/ || echo "No libs directory found"
-    - echo "Build directory contents:"
-    - ls -la build/ || echo "No build directory found"
+    - gradle clean build -x test --no-daemon
   artifacts:
-    when: always
     paths:
       - build/libs/*.jar
-      - build-output.log
-    expire_in: 1 week
   only:
     - main
     - develop
@@ -202,7 +138,6 @@ build_docker_image:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   before_script:
-    - echo "=== Docker Build Stage ==="
     - echo "=== Cloning from GitHub ==="
     - echo "GitHub Repo:" ${GITHUB_REPO_URL}
     - echo "Branch:" ${GITHUB_BRANCH:-docker}
@@ -212,24 +147,9 @@ build_docker_image:
     - sh -c "mv temp_repo/* temp_repo/.* . 2>/dev/null || true"
     - rm -rf temp_repo
     - echo "=== Repository cloned ==="
-    - echo "=== Checking for Dockerfile ==="
-    - ls -la
-    - test -f Dockerfile && echo "✅ Dockerfile EXISTS" || echo "❌ Dockerfile NOT FOUND"
-    - test -f .dockerignore && echo "✅ .dockerignore EXISTS" || echo "❌ .dockerignore NOT FOUND"
-    - docker --version
-    - echo "Building Docker image:" ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}
   script:
-    - echo "Building Docker image..."
     - docker build -t ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} .
     - docker build -t ${DOCKER_IMAGE_NAME}:latest .
-    - echo "Docker image built successfully!"
-    - echo "Listing images:"
-    - docker images | grep ${DOCKER_IMAGE_NAME}
-  artifacts:
-    when: on_success
-    paths:
-      - docker-image-info.txt
-    expire_in: 1 week
   only:
     - main
     - develop
@@ -237,34 +157,12 @@ build_docker_image:
 
 scan_docker_image:
   stage: build_scan_image
-  image: 
+  image:
     name: aquasec/trivy:latest
     entrypoint: [""]
-  dependencies:
-    - build_docker_image
-  variables:
-    TRIVY_NO_PROGRESS: "true"
-    TRIVY_EXIT_CODE: "0"
   script:
-    - echo "=== Scanning Docker Image for Vulnerabilities ==="
-    - trivy image --exit-code 0 --severity HIGH,CRITICAL --format table ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} || true
-    - echo "=== Generating Security Report ==="
-    - trivy image --exit-code 0 --severity HIGH,CRITICAL --format json -o trivy-report.json ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} || true
-    - trivy image --exit-code 0 --severity HIGH,CRITICAL --format template --template "@contrib/gitlab.tpl" -o gl-container-scanning-report.json ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} || true
-  artifacts:
-    when: always
-    reports:
-      container_scanning:
-        - gl-container-scanning-report.json
-    paths:
-      - trivy-report.json
-      - gl-container-scanning-report.json
-    expire_in: 1 week
+    - trivy image --exit-code 0 --severity HIGH,CRITICAL ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} || true
   allow_failure: true
-  only:
-    - main
-    - develop
-    - merge_requests
 
 # ============================================
 # PRODUCTION DOCKER BUILD STAGE
@@ -279,7 +177,6 @@ build_prod_docker_image:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   before_script:
-    - echo "=== Production Docker Build Stage ==="
     - echo "=== Cloning from GitHub ==="
     - echo "GitHub Repo:" ${GITHUB_REPO_URL}
     - echo "Branch:" ${GITHUB_BRANCH:-main}
@@ -289,29 +186,9 @@ build_prod_docker_image:
     - sh -c "mv temp_repo/* temp_repo/.* . 2>/dev/null || true"
     - rm -rf temp_repo
     - echo "=== Repository cloned ==="
-    - echo "=== Verifying application-prod.properties exists ==="
-    - test -f src/main/resources/application-prod.properties && echo "✅ application-prod.properties EXISTS" || echo "❌ application-prod.properties NOT FOUND"
-    - echo "=== Checking Dockerfile ==="
-    - test -f Dockerfile && echo "✅ Dockerfile EXISTS" || echo "❌ Dockerfile NOT FOUND"
-    - docker --version
-    - echo "Building Production Docker image:" ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}
-    - echo "=== Cloud SQL Connection Details (masked) ==="
-    - echo "DB_URL: ${PROD_DB_URL:0:30}..." 
-    - echo "DB_USERNAME: ${PROD_DB_USERNAME}"
   script:
-    - echo "Building Production Docker image with prod profile..."
     - docker build -t ${DOCKER_IMAGE_NAME}:prod-${DOCKER_IMAGE_TAG} .
     - docker build -t ${DOCKER_IMAGE_NAME}:prod-latest .
-    - echo "Production Docker image built successfully!"
-    - echo "Listing production images:"
-    - docker images | grep ${DOCKER_IMAGE_NAME} | grep prod
-    - echo "=== Image Details ==="
-    - docker inspect ${DOCKER_IMAGE_NAME}:prod-${DOCKER_IMAGE_TAG} | grep -A 5 "Config"
-  artifacts:
-    when: on_success
-    paths:
-      - docker-image-info.txt
-    expire_in: 1 week
   only:
     - main
   when: manual
@@ -327,15 +204,33 @@ push_prod_docker_image:
     DOCKER_TLS_CERTDIR: ""
   before_script:
     - echo "=== Pushing Production Docker Image to Registry ==="
+    - echo "=== Cloning from GitHub ==="
+    - echo "GitHub Repo:" ${GITHUB_REPO_URL}
+    - echo "Branch:" ${GITHUB_BRANCH:-main}
+    - apk add --no-cache git
+    - rm -rf .git
+    - git clone --depth 1 --branch ${GITHUB_BRANCH:-main} ${GITHUB_REPO_URL} temp_repo
+    - sh -c "mv temp_repo/* temp_repo/.* . 2>/dev/null || true"
+    - rm -rf temp_repo
+    - echo "=== Repository cloned ==="
     - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
   script:
+    - |
+      # Check if image exists, if not build it
+      if docker images --format "{{.Repository}}:{{.Tag}}" | grep -q "^${DOCKER_IMAGE_NAME}:prod-${DOCKER_IMAGE_TAG}$"; then
+        echo "Image ${DOCKER_IMAGE_NAME}:prod-${DOCKER_IMAGE_TAG} already exists, skipping build"
+      else
+        echo "Image not found, building it now..."
+        docker build -t ${DOCKER_IMAGE_NAME}:prod-${DOCKER_IMAGE_TAG} .
+        docker build -t ${DOCKER_IMAGE_NAME}:prod-latest .
+      fi
+    - echo "Tagging and pushing images..."
     - docker tag ${DOCKER_IMAGE_NAME}:prod-${DOCKER_IMAGE_TAG} ${CI_REGISTRY_IMAGE}:prod-${DOCKER_IMAGE_TAG}
     - docker tag ${DOCKER_IMAGE_NAME}:prod-latest ${CI_REGISTRY_IMAGE}:prod-latest
     - docker push ${CI_REGISTRY_IMAGE}:prod-${DOCKER_IMAGE_TAG}
     - docker push ${CI_REGISTRY_IMAGE}:prod-latest
     - echo "Production Docker image pushed successfully!"
-  dependencies:
-    - build_prod_docker_image
+  dependencies: []
   only:
     - main
   when: manual
