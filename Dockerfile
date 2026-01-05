@@ -11,14 +11,12 @@ COPY src ./src
 
 # Fix build.gradle issues before building
 RUN sed -i 's/maxHeapSize = "4g"/\/\/ maxHeapSize = "4g"  # Commented out for Docker build compatibility/' build.gradle || true
-# Comment out the custom buildDir line - using a more flexible pattern
 RUN sed -i 's|^buildDir = file.*|// buildDir override commented out for Docker build|' build.gradle || true
 
 # Create gradle.properties to override buildDir
 RUN echo "org.gradle.project.buildDir=build" > gradle.properties
 
 # Build the application (skip tests, checkstyle, and PMD for faster build)
-# Checkstyle and PMD are already run in CI pipeline separately
 RUN gradle clean build -x test -x checkstyleMain -x checkstyleTest -x pmdMain -x pmdTest --no-daemon
 
 # Verify JAR exists and copy to expected location if needed
@@ -44,11 +42,27 @@ COPY --from=build /app/build/libs/*.jar app.jar
 # Expose port
 EXPOSE 8080
 
+# Accept build arguments for environment variables
+ARG SPRING_PROFILE=prod
+ARG DB_URL
+ARG DB_USERNAME
+ARG DB_PASSWORD
+ARG JWT_SECRET
+ARG GOOGLE_CLIENT_ID
+
+# Set as environment variables (these will be used by application-prod.properties)
+ENV SPRING_PROFILES_ACTIVE=${SPRING_PROFILE}
+ENV DB_URL=${DB_URL}
+ENV DB_USERNAME=${DB_USERNAME}
+ENV DB_PASSWORD=${DB_PASSWORD}
+ENV JWT_SECRET=${JWT_SECRET}
+ENV GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+ENV JPA_DDL_AUTO=validate
+ENV FLYWAY_ENABLED=true
+
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
 
-# Run the application with configurable profile (defaults to prod)
-ARG SPRING_PROFILE=prod
-ENV SPRING_PROFILES_ACTIVE=${SPRING_PROFILE}
+# Run the application
 ENTRYPOINT ["java", "-Dspring.profiles.active=${SPRING_PROFILE}", "-jar", "app.jar"]

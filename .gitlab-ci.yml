@@ -193,7 +193,7 @@ build_prod_docker_image:
     - main
   when: manual
 
-# Optional: Push to Container Registry
+# Push to Container Registry
 push_prod_docker_image:
   stage: deploy_prod
   image: docker:24
@@ -220,9 +220,16 @@ push_prod_docker_image:
       if docker images --format "{{.Repository}}:{{.Tag}}" | grep -q "^${DOCKER_IMAGE_NAME}:prod-${DOCKER_IMAGE_TAG}$"; then
         echo "Image ${DOCKER_IMAGE_NAME}:prod-${DOCKER_IMAGE_TAG} already exists, skipping build"
       else
-        echo "Image not found, building it now..."
-        docker build -t ${DOCKER_IMAGE_NAME}:prod-${DOCKER_IMAGE_TAG} .
-        docker build -t ${DOCKER_IMAGE_NAME}:prod-latest .
+        echo "Image not found, building it now with database connection..."
+        docker build \
+          --build-arg SPRING_PROFILE=prod \
+          --build-arg DB_URL="${PROD_DB_URL}" \
+          --build-arg DB_USERNAME="${PROD_DB_USERNAME}" \
+          --build-arg DB_PASSWORD="${PROD_DB_PASSWORD}" \
+          --build-arg JWT_SECRET="${PROD_JWT_SECRET}" \
+          --build-arg GOOGLE_CLIENT_ID="${PROD_GOOGLE_CLIENT_ID:-}" \
+          -t ${DOCKER_IMAGE_NAME}:prod-${DOCKER_IMAGE_TAG} .
+        docker tag ${DOCKER_IMAGE_NAME}:prod-${DOCKER_IMAGE_TAG} ${DOCKER_IMAGE_NAME}:prod-latest
       fi
     - echo "Tagging and pushing images..."
     - docker tag ${DOCKER_IMAGE_NAME}:prod-${DOCKER_IMAGE_TAG} ${CI_REGISTRY_IMAGE}:prod-${DOCKER_IMAGE_TAG}
@@ -230,6 +237,7 @@ push_prod_docker_image:
     - docker push ${CI_REGISTRY_IMAGE}:prod-${DOCKER_IMAGE_TAG}
     - docker push ${CI_REGISTRY_IMAGE}:prod-latest
     - echo "Production Docker image pushed successfully!"
+    - echo "Image location: ${CI_REGISTRY_IMAGE}:prod-latest"
   dependencies: []
   only:
     - main
