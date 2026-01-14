@@ -5,6 +5,7 @@ stages:
   - build_compile
   - build_scan_image
   - deploy_prod
+  - deploy_cloud_run  # NEW STAGE
 
 variables:
   JAVA_VERSION: "21"
@@ -16,6 +17,12 @@ variables:
   GIT_DEPTH: "0"
   DOCKER_IMAGE_NAME: "webstore"
   DOCKER_IMAGE_TAG: "${CI_COMMIT_SHORT_SHA}"
+  # Cloud Run Configuration
+  GCP_PROJECT_ID: "todo-app-477207"
+  GCP_REGION: "us-central1"
+  ARTIFACT_REGISTRY_REPO: "webstore-repo"
+  CLOUD_RUN_SERVICE_NAME: "webstore-service"
+  CLOUD_SQL_INSTANCE_CONNECTION: "todo-app-477207:us-central1:web-store-instance"
 
 cache:
   key: ${CI_COMMIT_REF_SLUG}
@@ -187,8 +194,16 @@ build_prod_docker_image:
     - rm -rf temp_repo
     - echo "=== Repository cloned ==="
   script:
-    - docker build -t ${DOCKER_IMAGE_NAME}:prod-${DOCKER_IMAGE_TAG} .
-    - docker build -t ${DOCKER_IMAGE_NAME}:prod-latest .
+    - |
+      docker build \
+        --build-arg SPRING_PROFILE=prod \
+        --build-arg DB_URL="${PROD_DB_URL}" \
+        --build-arg DB_USERNAME="${PROD_DB_USERNAME}" \
+        --build-arg DB_PASSWORD="${PROD_DB_PASSWORD}" \
+        --build-arg JWT_SECRET="${PROD_JWT_SECRET}" \
+        --build-arg GOOGLE_CLIENT_ID="${PROD_GOOGLE_CLIENT_ID:-}" \
+        -t ${DOCKER_IMAGE_NAME}:prod-${DOCKER_IMAGE_TAG} .
+    - docker tag ${DOCKER_IMAGE_NAME}:prod-${DOCKER_IMAGE_TAG} ${DOCKER_IMAGE_NAME}:prod-latest
   only:
     - main
   when: manual
@@ -238,6 +253,92 @@ push_prod_docker_image:
     - docker push ${CI_REGISTRY_IMAGE}:prod-latest
     - echo "Production Docker image pushed successfully!"
     - echo "Image location: ${CI_REGISTRY_IMAGE}:prod-latest"
+  dependencies: []
+  only:
+    - main
+  when: manual
+
+# ============================================
+# CLOUD RUN DEPLOYMENT STAGE
+# ============================================
+
+# Push Docker image to Google Artifact Registry
+push_to_artifact_registry:
+  stage: deploy_cloud_run
+  image: google/cloud-sdk:latest
+  before_script:
+    - echo "=== Setting up GCP authentication ==="
+    - echo "${GCP_SERVICE_ACCOUNT_KEY}" | base64 -d > /tmp/gcp-key.json
+    - gcloud auth activate-service-account --key-file=/tmp/gcp-key.json
+    - gcloud config set project ${GCP_PROJECT_ID}
+    - echo "=== Configuring Docker for Artifact Registry ==="
+    - gcloud auth configure-docker ${GCP_REGION}-docker.pkg.dev --quiet
+    - echo "=== Cloning from GitHub ==="
+    - echo "GitHub Repo:" ${GITHUB_REPO_URL}
+    - echo "Branch:" ${GITHUB_BRANCH:-main}
+    - apt-get update -qq && apt-get install -y -qq git docker.io
+    - rm -rf .git
+    - git clone --depth 1 --branch ${GITHUB_BRANCH:-main} ${GITHUB_REPO_URL} temp_repo
+    - sh -c "mv temp_repo/* temp_repo/.* . 2>/dev/null || true"
+    - rm -rf temp_repo
+    - echo "=== Repository cloned ==="
+  script:
+    - echo "=== Building Docker image for Cloud Run ==="
+    - |
+      docker build \
+        --build-arg SPRING_PROFILE=prod \
+        --build-arg DB_URL="jdbc:postgresql:///web-store?cloudSqlInstance=${CLOUD_SQL_INSTANCE_CONNECTION}&socketFactory=com.google.cloud.sql.postgres.SocketFactory" \
+        --build-arg DB_USERNAME="${PROD_DB_USERNAME}" \
+        --build-arg DB_PASSWORD="${PROD_DB_PASSWORD}" \
+        --build-arg JWT_SECRET="${PROD_JWT_SECRET}" \
+        --build-arg GOOGLE_CLIENT_ID="${PROD_GOOGLE_CLIENT_ID:-}" \
+        -t ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPO}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} \
+        -t ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPO}/${DOCKER_IMAGE_NAME}:latest \
+        .
+    - echo "=== Pushing to Artifact Registry ==="
+    - docker push ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPO}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}
+    - docker push ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPO}/${DOCKER_IMAGE_NAME}:latest
+    - echo "=== Image pushed successfully ==="
+    - echo "Image: ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPO}/${DOCKER_IMAGE_NAME}:latest"
+  only:
+    - main
+  when: manual
+
+# Deploy to Cloud Run
+deploy_to_cloud_run:
+  stage: deploy_cloud_run
+  image: google/cloud-sdk:latest
+  before_script:
+    - echo "=== Setting up GCP authentication ==="
+    - echo "${GCP_SERVICE_ACCOUNT_KEY}" | base64 -d > /tmp/gcp-key.json
+    - gcloud auth activate-service-account --key-file=/tmp/gcp-key.json
+    - gcloud config set project ${GCP_PROJECT_ID}
+  script:
+    - echo "=== Deploying to Cloud Run ==="
+    - |
+      gcloud run deploy ${CLOUD_RUN_SERVICE_NAME} \
+        --image ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPO}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} \
+        --region ${GCP_REGION} \
+        --platform managed \
+        --allow-unauthenticated \
+        --add-cloudsql-instances ${CLOUD_SQL_INSTANCE_CONNECTION} \
+        --set-env-vars "SPRING_PROFILES_ACTIVE=prod" \
+        --set-env-vars "DB_URL=jdbc:postgresql:///web-store?cloudSqlInstance=${CLOUD_SQL_INSTANCE_CONNECTION}&socketFactory=com.google.cloud.sql.postgres.SocketFactory" \
+        --set-env-vars "DB_USERNAME=${PROD_DB_USERNAME}" \
+        --set-env-vars "DB_PASSWORD=${PROD_DB_PASSWORD}" \
+        --set-env-vars "JWT_SECRET=${PROD_JWT_SECRET}" \
+        --set-env-vars "GOOGLE_CLIENT_ID=${PROD_GOOGLE_CLIENT_ID:-}" \
+        --set-env-vars "JPA_DDL_AUTO=validate" \
+        --set-env-vars "FLYWAY_ENABLED=true" \
+        --memory 512Mi \
+        --cpu 1 \
+        --min-instances 0 \
+        --max-instances 10 \
+        --timeout 300 \
+        --port 8080
+    - echo "=== Deployment completed ==="
+    - echo "Getting service URL..."
+    - gcloud run services describe ${CLOUD_RUN_SERVICE_NAME} --region ${GCP_REGION} --format 'value(status.url)'
   dependencies: []
   only:
     - main

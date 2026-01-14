@@ -50,6 +50,8 @@ dependencies {
     testImplementation 'org.mockito:mockito-core'
     testImplementation 'org.jacoco:org.jacoco.agent:0.8.8:runtime'
     runtimeOnly 'org.postgresql:postgresql:42.6.0'
+    // Add Cloud SQL Socket Factory for Cloud Run
+    implementation 'com.google.cloud.sql:postgres-socket-factory:1.15.0'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
