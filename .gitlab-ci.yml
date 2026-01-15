@@ -265,25 +265,29 @@ push_prod_docker_image:
 # Push Docker image to Google Artifact Registry
 push_to_artifact_registry:
   stage: deploy_cloud_run
-  image: google/cloud-sdk:latest
+  image: docker:24
   services:
     - docker:24-dind
   variables:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   before_script:
+    - echo "=== Installing gcloud SDK ==="
+    - apk add --no-cache curl bash python3 py3-pip
+    - curl https://sdk.cloud.google.com | bash
+    - export PATH=$PATH:/root/google-cloud-sdk/bin
     - echo "=== Setting up GCP authentication ==="
     - echo "${GCP_SERVICE_ACCOUNT_KEY}" | base64 -d > /tmp/gcp-key.json
     - gcloud auth activate-service-account --key-file=/tmp/gcp-key.json
     - gcloud config set project ${GCP_PROJECT_ID}
     - echo "=== Configuring Docker for Artifact Registry ==="
     - gcloud auth configure-docker ${GCP_REGION}-docker.pkg.dev --quiet
-    - echo "=== Installing Docker client ==="
-    - apt-get update -qq && apt-get install -y -qq docker.io
+    - echo "=== Verifying Docker connection ==="
+    - docker info
     - echo "=== Cloning from GitHub ==="
     - echo "GitHub Repo:" ${GITHUB_REPO_URL}
     - echo "Branch:" ${GITHUB_BRANCH:-main}
-    - apt-get install -y -qq git
+    - apk add --no-cache git
     - rm -rf .git
     - git clone --depth 1 --branch ${GITHUB_BRANCH:-main} ${GITHUB_REPO_URL} temp_repo
     - sh -c "mv temp_repo/* temp_repo/.* . 2>/dev/null || true"
