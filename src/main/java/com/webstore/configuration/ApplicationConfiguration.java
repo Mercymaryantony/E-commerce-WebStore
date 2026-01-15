@@ -72,6 +72,7 @@ public class ApplicationConfiguration {
                     .authorizeHttpRequests(authorize -> authorize
                             // Public endpoints - no authentication required
                             .requestMatchers("/api/auth/**").permitAll()
+                            .requestMatchers("/actuator/**").permitAll() // THIS IS THE NEW LINE
 
                             // Admin-only endpoints - using constant
                             .requestMatchers("/api/admin/**").hasRole(UserRole.ADMIN)
