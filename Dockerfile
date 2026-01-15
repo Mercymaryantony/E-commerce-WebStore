@@ -65,4 +65,5 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
 
 # Run the application
-ENTRYPOINT ["java", "-Dspring.profiles.active=${SPRING_PROFILE}", "-jar", "app.jar"]
+# Note: SPRING_PROFILES_ACTIVE is already set as ENV variable, so we don't need to pass it via -D
+ENTRYPOINT ["java", "-jar", "app.jar"]
