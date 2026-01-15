@@ -334,7 +334,6 @@ deploy_to_cloud_run:
         --allow-unauthenticated \
         --add-cloudsql-instances ${CLOUD_SQL_INSTANCE_CONNECTION} \
         --set-env-vars "SPRING_PROFILES_ACTIVE=prod" \
-        --set-env-vars "PORT=8080" \
         --set-env-vars "DB_URL=jdbc:postgresql:///web-store?cloudSqlInstance=${CLOUD_SQL_INSTANCE_CONNECTION}&socketFactory=com.google.cloud.sql.postgres.SocketFactory" \
         --set-env-vars "DB_USERNAME=${PROD_DB_USERNAME}" \
         --set-env-vars "DB_PASSWORD=${PROD_DB_PASSWORD}" \
@@ -348,7 +347,7 @@ deploy_to_cloud_run:
         --max-instances 10 \
         --timeout 900 \
         --port 8080 \
-        --startup-cpu-boost
+        --cpu-boost
     - echo "=== Deployment completed ==="
     - echo "Getting service URL..."
     - gcloud run services describe ${CLOUD_RUN_SERVICE_NAME} --region ${GCP_REGION} --format 'value(status.url)'
