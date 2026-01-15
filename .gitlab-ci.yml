@@ -252,7 +252,7 @@ push_prod_docker_image:
     - docker push ${CI_REGISTRY_IMAGE}:prod-${DOCKER_IMAGE_TAG}
     - docker push ${CI_REGISTRY_IMAGE}:prod-latest
     - echo "Production Docker image pushed successfully!"
-    - echo "Image location: ${CI_REGISTRY_IMAGE}:prod-latest"
+    - echo "Image location:" ${CI_REGISTRY_IMAGE}:prod-latest
   dependencies: []
   only:
     - main
@@ -310,7 +310,7 @@ push_to_artifact_registry:
     - docker push ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPO}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}
     - docker push ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPO}/${DOCKER_IMAGE_NAME}:latest
     - echo "=== Image pushed successfully ==="
-    - echo "Image: ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPO}/${DOCKER_IMAGE_NAME}:latest"
+    - echo "Image:" ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPO}/${DOCKER_IMAGE_NAME}:latest
   only:
     - main
   when: manual
@@ -334,6 +334,7 @@ deploy_to_cloud_run:
         --allow-unauthenticated \
         --add-cloudsql-instances ${CLOUD_SQL_INSTANCE_CONNECTION} \
         --set-env-vars "SPRING_PROFILES_ACTIVE=prod" \
+        --set-env-vars "PORT=8080" \
         --set-env-vars "DB_URL=jdbc:postgresql:///web-store?cloudSqlInstance=${CLOUD_SQL_INSTANCE_CONNECTION}&socketFactory=com.google.cloud.sql.postgres.SocketFactory" \
         --set-env-vars "DB_USERNAME=${PROD_DB_USERNAME}" \
         --set-env-vars "DB_PASSWORD=${PROD_DB_PASSWORD}" \
@@ -341,12 +342,13 @@ deploy_to_cloud_run:
         --set-env-vars "GOOGLE_CLIENT_ID=${PROD_GOOGLE_CLIENT_ID:-}" \
         --set-env-vars "JPA_DDL_AUTO=validate" \
         --set-env-vars "FLYWAY_ENABLED=true" \
-        --memory 512Mi \
-        --cpu 1 \
+        --memory 1Gi \
+        --cpu 2 \
         --min-instances 0 \
         --max-instances 10 \
-        --timeout 300 \
-        --port 8080
+        --timeout 900 \
+        --port 8080 \
+        --startup-cpu-boost
     - echo "=== Deployment completed ==="
     - echo "Getting service URL..."
     - gcloud run services describe ${CLOUD_RUN_SERVICE_NAME} --region ${GCP_REGION} --format 'value(status.url)'
