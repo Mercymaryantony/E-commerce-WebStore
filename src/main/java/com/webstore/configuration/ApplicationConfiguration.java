@@ -75,15 +75,15 @@ public class ApplicationConfiguration {
                             .requestMatchers("/actuator/**").permitAll() 
 
                             // Admin-only endpoints - using constant
-                            .requestMatchers("/api/admin/**").permitAll()
+                            .requestMatchers("/api/admin/**").hasRole(UserRole.ADMIN)
 
                             // Seller-only endpoints - using constant
-                            .requestMatchers("/api/seller/**").permitAll()
+                            .requestMatchers("/api/sellers/**").permitAll()
 
                             // Endpoints accessible by both ADMIN and SELLER - using constants
-                            .requestMatchers("/api/products/**").permitAll() 
-                            .requestMatchers("/api/catalogues/**").permitAll()
-                            .requestMatchers("/api/categories/**").permitAll()
+                            .requestMatchers("/api/products/**").hasAnyRole(UserRole.ADMIN, UserRole.SELLER)
+                            .requestMatchers("/api/catalogues/**").hasAnyRole(UserRole.ADMIN, UserRole.SELLER)
+                            .requestMatchers("/api/categories/**").hasAnyRole(UserRole.ADMIN, UserRole.SELLER)
 
                             // All other requests require authentication (any role)
                             .anyRequest().authenticated())
