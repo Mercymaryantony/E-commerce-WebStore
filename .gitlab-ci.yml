@@ -206,7 +206,7 @@ build_prod_docker_image:
     - docker tag ${DOCKER_IMAGE_NAME}:prod-${DOCKER_IMAGE_TAG} ${DOCKER_IMAGE_NAME}:prod-latest
   only:
     - main
-  when: manual
+  
 
 # Push to Container Registry
 push_prod_docker_image:
@@ -256,7 +256,7 @@ push_prod_docker_image:
   dependencies: []
   only:
     - main
-  when: manual
+ 
 
 # ============================================
 # CLOUD RUN DEPLOYMENT STAGE
@@ -313,7 +313,7 @@ push_to_artifact_registry:
     - echo "Image:" ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REGISTRY_REPO}/${DOCKER_IMAGE_NAME}:latest
   only:
     - main
-  when: manual
+  
 
 # Deploy to Cloud Run
 deploy_to_cloud_run:
